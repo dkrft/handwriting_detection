@@ -1,0 +1,49 @@
+# MAIN STRUCTURE ############################################################
+
+'ID'				unique 27-digit hash from Labelbox
+
+'Labeled Data'		URL showing original image WITHOUT labeling
+
+'Label'				dictionary of items matching classifications
+					each classification has an array with elements and dicts.
+
+'Created By'		username who worked on labeling
+
+'Project Name'		name of the project
+
+'Created At'		date when labeling completed
+
+'Seconds to Label'	how long it took to label
+
+'External ID'		name of uploaded picture (e.g. page0049.jpg)
+
+'Agreement'			null unless checked by another collaborator
+
+'Dataset Name'		name of the dataset that was labeled (in LabelBox)
+
+'Reviews'			list of reviews performed on labeled data
+
+'View Label'		URL showing original image WITH labeling applied
+
+'Masks'				URL with masks for each classification
+
+##  LABEL ##########################################################
+* CLASSIFICATIONS: 
+	= Well-aligned 	easily fit with rectangle
+	  OR
+	  Difficult		fit best achieved with polygon to minimize noise
+		--- select_text_color
+			black, gray, red, blue, green, other
+		---how_easy_is_it_to_read_the_handwriting?
+			easy, medium, difficult
+		--- type_of_handwriting_element
+			comment, editing_mark_(not_text), signature, text_in_field, other
+		--- what_does_the_selected_text_say?
+			put original words (typos and all) if readable
+		--- what_is_the_orientation_of_the_text_within_the_shape?
+			vertical, horizontal, mis-aligned
+		--- geometry
+			{"x": , "y": } pixel locations for all points of bounding object (rectangle, polygon)
+
+	= Scan-quality	how good the scan quality is
+		--- clear, fuzzy, or fuzzy & distorted
