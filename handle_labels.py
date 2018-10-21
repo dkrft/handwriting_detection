@@ -57,44 +57,42 @@ def create_pandas(json):
 
     Returns
     ----------
-    df: pandas dataframe
+    pandas dataframe
     """
     holder = defaultdict(list)
 
     for row in json:
         picid = row["External ID"]
-
         items = row["Label"]
+
+        # assumes masks are exported
+        masks = row["Masks"]
+
         for key in items:
             # rejects scan info which is just clear/fuzzy/etc.
+            # if just 1-classification could be simplified
             if not isinstance(items[key], str):
+
                 for it in items[key]:
                     # repeated elements
-                    holder["pic"] = picid
+                    holder["pic"].append(picid)
+                    # holder["mask"].append(masks[key])
 
                     # need to change for multi-color text if needed
                     color = it['select_text_color']
-                    holder["color"] = color[0] if len(
-                        color) == 1 else "multi-color"
+                    holder["color"].append(color[0] if len(
+                        color) == 1 else "multi-color")
 
-                    holder["reading_ease"] = it[
-                        'how_easy_is_it_to_read_the_handwriting?']
-                    holder["el_type"] = it['type_of_handwriting_element']
-                    holder["meaning"] = it[
-                        'what_does_the_selected_text_element_say?']
-                    holder["words"] = it[
-                        'what_is_the_orientation_of_the_text_within_the_shape?']
-                    # print(it)
-            # if isinstance(items[key], dict):
-            #
-            # print(it)
-#         # print(, row["Masks"].keys())
-#         # print()
-#         # for sub in row["Label"]:
-#         #     holder["pic"] = row["External ID"]
-#         #     print(sub)
-#         #     print(row["Label"])
-#         #     break
+                    holder["reading_ease"].append(
+                        it['how_easy_is_it_to_read_the_handwriting?'])
+                    holder["el_type"].append(it['type_of_handwriting_element'])
+                    holder["meaning"].append(
+                        it['what_does_the_selected_text_say?'])
+                    holder["words"].append(
+                        it['what_is_the_orientation_of_the_text_within_the_shape?'])
+
+    return pd.DataFrame(holder)
 
 # retrieve_masks(json_data)
-create_pandas(json_data)
+test = create_pandas(json_data)
+print(test)
