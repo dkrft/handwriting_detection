@@ -5,8 +5,9 @@ import json
 import pandas as pd
 import re
 
-jsons_dir = "./labels/"
-with open(jsons_dir + "first50_20_10.json", "r", encoding='utf-8') as json_file:
+labels_dir = "./labels/"
+file = "first50_20_10.json"
+with open(labels_dir + file, "r", encoding='utf-8') as json_file:
     json_data = json.load(json_file)
 
 
@@ -51,6 +52,9 @@ def create_pandas(json):
     Create dataframe where each row contains location-based
     grouped handwritten elements; not line-separated yet
 
+    Assumes masks exported and retrieved with retrieve_masks()
+    Might be better to integrate the two options
+
     Parameters
     ----------
     json : json file
@@ -60,13 +64,11 @@ def create_pandas(json):
     pandas dataframe
     """
     holder = defaultdict(list)
+    mask_dir = "../data/masks"
 
     for row in json:
         picid = row["External ID"]
         items = row["Label"]
-
-        # assumes masks are exported
-        masks = row["Masks"]
 
         for key in items:
             # rejects scan info which is just clear/fuzzy/etc.
@@ -76,7 +78,11 @@ def create_pandas(json):
                 for it in items[key]:
                     # repeated elements
                     holder["pic"].append(picid)
-                    # holder["mask"].append(masks[key])
+
+                    save_as = "mask%s_%s.png" % (re.findall(r"\d+", picid)[0],
+                                                 0 if key == "Well-aligned"
+                                                 else 1)
+                    holder["mask"].append('%s/%s' % (mask_dir, save_as))
 
                     # need to change for multi-color text if needed
                     color = it['select_text_color']
@@ -91,8 +97,8 @@ def create_pandas(json):
                     holder["words"].append(
                         it['what_is_the_orientation_of_the_text_within_the_shape?'])
 
-    return pd.DataFrame(holder)
+    df = pd.DataFrame(holder)
+    df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
 
 # retrieve_masks(json_data)
-test = create_pandas(json_data)
-print(test)
+create_pandas(json_data)
