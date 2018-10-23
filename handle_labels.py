@@ -144,7 +144,7 @@ def create_dataframe(filename):
         return df.to_hdf(master_hdf(filename), "data")
 
 
-def retrieve_mask(df):
+def retrieve_masks(df):
     """
     Download all masks using wget to save in mask<pic#>_<mask#>.jpg
 
@@ -156,16 +156,26 @@ def retrieve_mask(df):
     ----------
     saves df["mask_url"] to df["mask"] location
 
+    Comments
+    ----------
+    might be able to improve with a sleep function between wget calls;
+    instead of using urllib.
+
     """
 
-    dirs = df["mask"].apply(os.path.dirname)
+    # reject where mask not set to value
+    sel = df[df["mask"] != ""].copy()
+
+    dirs = sel["mask"].apply(os.path.dirname)
     for out in dirs.unique():
         if len(out) > 1:
             subprocess.Popen(["mkdir", "-p", out])
 
-    for loc, url in zip(df["mask"], df["mask_url"]):
+    count = 0
+    for loc, url in zip(sel["mask"], sel["mask_url"]):
         if os.path.isfile(loc):
             if os.path.getsize(loc) > 0:
+                count += 1
                 continue
             else:
                 print(url)
@@ -173,6 +183,17 @@ def retrieve_mask(df):
         else:
             args = ['wget', '-O', loc, url]
             p = subprocess.Popen(args, stdout=subprocess.PIPE)
+
+            # have to wait otherwise output scrambled
+            os.waitpid(p.pid, 0)
+            if os.path.isfile(loc) and os.path.getsize(loc) > 0:
+                count += 1
+
+    if count == sel.shape[0]:
+        print("All specified masks have been downloaded. No need to re-run")
+    else:
+        print("Rerun retrieve_masks until receive message that all masks downloaded")
+
 
 name = "22-10.json"
 if False:  # create master dataframe
@@ -182,9 +203,10 @@ if True:  # use master dateframe for selections, syncing data, etc.
     master = pd.read_hdf(master_hdf(name))
 
     # sync masks and images
-    retrieve_mask(master)
+    retrieve_masks(master)
 
 
 # need out each element information of identified text and type
 # need way to easily convert into hasHR or not
 # to do: robustly check that no/yes keys correctly kept
+# readme file
