@@ -10,6 +10,7 @@ import urllib.request
 
 
 labels_dir = "./labels/"
+master_hdf = lambda f: labels_dir + re.sub(r'\.json$', '', f) + ".hdf"
 
 
 def create_dataframe(filename):
@@ -37,7 +38,7 @@ def create_dataframe(filename):
 
     for row in json_data:
         picid = row["External ID"]
-        dataset = row["Dataset Name"].replace("(", "_")
+        dataset = row["Dataset Name"].replace("(", "_").replace(")", "")
         items = row["Label"]
         masks = [] if "Masks" not in row else row["Masks"]
         path = "../data/%s/%s" % (dataset, picid)
@@ -46,7 +47,7 @@ def create_dataframe(filename):
             if "Start of text" in items:
                 if len(items["Text"]) == len(items["Start of text"]):
 
-                    mask_file = "../data/%s/text_mask/%s" % (
+                    mask_file = "../data/%s/text_mask/%s.png" % (
                         dataset, picid.split(".")[0])
 
                     for el, pt in zip(items["Text"], items["Start of text"]):
@@ -88,7 +89,7 @@ def create_dataframe(filename):
                 error.append(("start", row["View Label"]))
 
         if "Markings" in items:
-            mask_file = "../data/%s/mark_mask/%s" % (
+            mask_file = "../data/%s/mark_mask/%s.png" % (
                 dataset, picid.split(".")[0])
 
             for mark in items["Markings"]:
@@ -140,35 +141,48 @@ def create_dataframe(filename):
         file.close()
     else:
         df = pd.DataFrame(elems)
-        return df.to_hdf(labels_dir + re.sub(r'\.json$', '', filename) + ".hdf",
-                         "data")
+        return df.to_hdf(master_hdf(filename), "data")
 
 
-def retrieve_mask(url, save_file):
+def retrieve_mask(df):
     """
     Download all masks using wget to save in mask<pic#>_<mask#>.jpg
 
     Parameters
     ----------
-    json : json file from Labelbox
+    df : dataframe from create_dataframe
 
     Returns
     ----------
-    files saved to ../data/masks
-
+    saves df["mask_url"] to df["mask"] location
 
     """
-    print('ok')
-    # save_dir = os.path.dirname(save_file)
 
-    # # running a lot of unnecessary commands now :(
-    # subprocess.Popen("mkdir -p " + save_dir, shell=True, executable='/bin/bash')
+    dirs = df["mask"].apply(os.path.dirname)
+    for out in dirs.unique():
+        if len(out) > 1:
+            subprocess.Popen(["mkdir", "-p", out])
 
-    # # very slow....wget faster?
-    # urllib.request.urlretrieve(url, save_file)
+    for loc, url in zip(df["mask"], df["mask_url"]):
+        if os.path.isfile(loc):
+            if os.path.getsize(loc) > 0:
+                continue
+            else:
+                print(url)
+                urllib.request.urlretrieve(url, loc)
+        else:
+            args = ['wget', '-O', loc, url]
+            p = subprocess.Popen(args, stdout=subprocess.PIPE)
 
 name = "22-10.json"
-create_dataframe(name)
+if False:  # create master dataframe
+    create_dataframe(name)
+
+if True:  # use master dateframe for selections, syncing data, etc.
+    master = pd.read_hdf(master_hdf(name))
+
+    # sync masks and images
+    retrieve_mask(master)
 
 
 # need out each element information of identified text and type
