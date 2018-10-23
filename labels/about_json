@@ -28,9 +28,7 @@
 'Masks'				URL with masks for each classification
 
 ##  LABEL ##########################################################
-NOTE: these labels only appear if any specification/selection was made within it;
-otherwise, they simply will not appear (no nulls). Keys that may not appear are
-demarked with +; assume False when not present. Otherwise, they are marked with a *.
+NOTE: these labels only appear if any specification/selection was made within it; otherwise, they simply will not appear (no nulls). Keys that may not appear are demarked with +; assume False when not present. Otherwise, they are marked with a *.
 
 
 * CLASSIFICATIONS: 

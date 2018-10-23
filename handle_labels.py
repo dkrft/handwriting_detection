@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 import json
-import pandas as pd
+# import pandas as pd
 import re
 
 labels_dir = "./labels/"
@@ -60,17 +60,57 @@ def create_pandas(json):
     ----------
     pandas dataframe
     """
-    holder = defaultdict(list)
+    page = defaultdict(list)
+    elems = defaultdict(list)
     mask_dir = "../data/masks"
 
+    error = []
     for row in json:
         picid = row["External ID"]
         dataset = row["Dataset Name"]
         items = row["Label"]
-        print(items.keys())
+        path = "../data/%s/%s" % (dataset, picid)
 
-        # for key in items:
-        # print(item)
+        # per page easy, # elems of handwritten, # elems marks
+        page["hasHR"].append("contains_handwriting" in items)
+        page["pageid"].append(picid)
+        page["path"].append(path)
+
+        if "Text" in items:
+            if "Start of text" in items:
+                text_el = items["Text"]
+                point_el = items["Start of text"]
+                if len(text_el) == len(point_el):
+                    for el in items["Text"]:
+                        elems[""]
+                        elems["is_sig"].append("is_signature?" in el)
+                        elems["readability"].append(el['ease_in_reading'])
+
+                # every Text should have a Start of Text item
+                else:
+                    error.append(row["View Label"])
+
+            # every Text should have a Start of Text item
+            else:
+                error.append(row["View Label"])
+
+        if len(error) > 0:
+            print("[ERROR] check URLs for missing Start of Text elements:")
+            for err in error:
+                print(err)
+            print("\nAfter resolving, export and try again.")
+            return
+        else:
+            return  # dataframe
+
+        # from Text
+        # page["num_hw"] =
+        # page["num_sig"] =
+        # page["num_faint"] =
+
+        # from Markings
+        # page["num_marks"] =
+
     #         # rejects scan info which is just clear/fuzzy/etc.
     #         # if just 1-classification could be simplified
     #         if not isinstance(items[key], str):
@@ -107,3 +147,7 @@ with open(labels_dir + file, "r", encoding='utf-8') as json_file:
     json_data = json.load(json_file)
 
 create_pandas(json_data)
+
+
+# need out each element information of identified text and type
+# need way to easily convert into hasHR or not
