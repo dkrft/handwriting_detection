@@ -184,6 +184,8 @@ def retrieve_masks(df):
             p = subprocess.Popen(args, stdout=subprocess.PIPE)
 
             # have to wait otherwise output scrambled
+            # could comment out if wanting to run faster & willing
+            # to rerun retrieve_masks again with active
             os.waitpid(p.pid, 0)
             if os.path.isfile(loc) and os.path.getsize(loc) > 0:
                 count += 1
