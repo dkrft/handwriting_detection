@@ -1,0 +1,25 @@
+# TABLE OF CONTENTS
+* Note on usage
+* Accessing data
+* Processing new data
+
+
+# NOTE ON USAGE
+
+This README is a temporary file to facilitate the development and use of the handwriting-detection project. A final README.md will be created when the tools and scripts have been generalized for everyday use.
+
+# ACCESSING DATA
+ 1. Create a folder (e.g. project) to house the project. 
+
+ 2. Create a soft link from your Dropbox folder to a sub-folder known as data:
+ 	ln -s <DROPBOX_PATH>/Training\ Data/ ./data
+
+ 3. Within another sub-folder, clone the github repository:
+     https://github.com/dkrft/handwriting_detection
+
+ [In cloned git repository]
+ * All data labels are given in the labels/ directory. Files are named based on their most recent checkout date. JSONs come from Labelbox and are processed to make pandas HDF files (with "data" as the key).
+
+
+ # PROCESSING NEW DATA
+
