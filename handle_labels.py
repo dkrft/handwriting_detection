@@ -160,16 +160,12 @@ def create_dataframe(file):
         file.close()
     else:
         df = pd.DataFrame(elems)
-        return df
-        # df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
+        return df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
 
 # retrieve_masks(json_data)
 
 file = "22-10.json"
 test = create_dataframe(file)
-print(test[['hwType', 'readability', 'isSig', 'isCrossed',
-            'isMarker', 'isFaint']])
-print(sum(test.hwType == ""))
 
 
 # need out each element information of identified text and type
