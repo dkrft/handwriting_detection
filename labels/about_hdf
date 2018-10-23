@@ -22,19 +22,19 @@
 
 # COLUMNS OF DD-MM.hdf
 
-   column             values                    meaning
-   ------            ---------------------   --------------------------
- * hwType             "text", "mark", ""    type of handwritten element
- * hasHW             1, 0                   1/0 = T/F contains handwritten element
- * pageid             pageXXXX.jpg          OG image associated with row 
- * path              ../data/...            path to OG image
- * mask              ../data/.._mask/...    path to mask for that element
- * mask_url          http://...             URL of mask on Labelbox
+   column           values                 meaning
+   ------           ---------------------  --------------------------
+ * hwType           "text", "mark", ""     type of handwritten element
+ * hasHW            1, 0                   1/0 = T/F contains handwritten element
+ * pageid            pageXXXX.jpg          OG image associated with row 
+ * path             ../data/...            path to OG image
+ * mask             ../data/.._mask/...    path to mask for that element
+ * mask_url         http://...             URL of mask on Labelbox
 
- * readability       "easy", "hard",        refers to readibility as 
-                     "impossible", ""       assessed by human labeler;
-                                            impossible may lack a transcription. "" should only
-                                            exist for hwType = "mark", ""
+ * readability      "easy", "hard",        refers to readibility as 
+                    "impossible", ""       assessed by human labeler;
+                                           impossible may lack a transcription. "" should only
+                                           exist for hwType = "mark", ""
 
  * isSig            1, 0                    is element a signature
  * isCrossed        1, 0                    is element crossed out
@@ -47,13 +47,13 @@
                                             labeler or empty string
 
 # COLUMS OF DD-MM_hasHW.hdf
-   column             values                    meaning
+   column            values                  meaning
    ------            ---------------------   --------------------------
  * hasHW             1, 0                    has or does not have handwritten element on page
  * pageid            pageXXXX.jpg            OG image associated with row 
- * path             ../data/...                path to OG image
- * numLines            0, ...                    number of hwType="text" for a page
- * numSigs            0, ...                    sums isSigs for a page
- * hasFaint            1, 0                    max value of isFaint for a page
- * hasMarker        1, 0                    max value of isMarker for a page
+ * path              ../data/...             path to OG image
+ * numLines          0, ...                  number of hwType="text" for a page
+ * numSigs           0, ...                  sums isSigs for a page
+ * hasFaint          1, 0                    max value of isFaint for a page
+ * hasMarker         1, 0                    max value of isMarker for a page
  * hasCrossed        1, 0                    max value of isCrossed for a page
