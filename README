@@ -23,11 +23,17 @@
  2. Create a soft link from your Dropbox folder to a sub-folder known as data:
  	ln -s <DROPBOX_PATH>/Training\ Data/ ./data
 
- 3. Within another sub-folder, clone the github repository:
+ 3. Within another sub-folder (name not important), clone the github repository:
      https://github.com/dkrft/handwriting_detection
 
  [In cloned git repository]
- * All data labels are given in the labels/ directory. Files are named based on their most recent checkout date. JSONs come from Labelbox and are processed to make pandas HDF files (with "data" as the key).
+ * All data labels are given in the labels/ directory. Files are named based on their most recent checkout date. JSONs come from Labelbox and are processed to make pandas HDFs (with "data" as the key).
+
+ [Dropbox]
+ * Data is collected by date (MM-DD) and has this structure:
+    - img 			has original jpgs that will be uploaded to Labelbox
+    - text_mask		contains masks associated with handwritten text
+    - mark_mask		holds masks associated with marks (non-textual handwriting)
 
 
 # PROCESSING NEW DATA
@@ -47,7 +53,7 @@
 
  	   TO NOTE If data was missing from the JSON files, errors may occur. Known errors will result in a clear message with an error.txt file from which you should visit the listed URLs, resolve the issues, re-export the data, and startover in step 3.
 
- 	* After you have successfully, completed creating an HDF, you should sync the masks associated with your data. To do this, run retrieve_masks() on the master dataframe (DD-MM.hdf). 
+ 	* After you have successfully, completed creating an HDF, you should sync the masks associated with your data. To do this, run retrieve_masks() on the master dataframe (DD-MM.hdf). Masks are saved in text_mask and mark_mask in the MM-DD directory.
 
    	   TO NOTE: Read the output message as it may ask you to re-run retrieve_masks(), especially if you added lots of data. This is because of the Labelbox API interface, which restricts the number of pings within some time.
 

@@ -41,7 +41,7 @@ def create_dataframe(filename):
         dataset = row["Dataset Name"].replace("(", "_").replace(")", "")
         items = row["Label"]
         masks = [] if "Masks" not in row else row["Masks"]
-        path = "../data/%s/%s" % (dataset, picid)
+        path = "../data/%s/img/%s" % (dataset, picid)
 
         if "Text" in items:
             if "Start of text" in items:
@@ -196,7 +196,7 @@ def retrieve_masks(df):
 
 
 name = "22-10.json"
-if False:  # create master dataframe
+if True:  # create master dataframe
     create_dataframe(name)
 
 if True:  # use master dateframe for selections, syncing data, etc.
