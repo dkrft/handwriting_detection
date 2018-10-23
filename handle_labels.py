@@ -6,9 +6,6 @@ import pandas as pd
 import re
 
 labels_dir = "./labels/"
-file = "first50_20_10.json"
-with open(labels_dir + file, "r", encoding='utf-8') as json_file:
-    json_data = json.load(json_file)
 
 
 def retrieve_masks(json):
@@ -68,37 +65,45 @@ def create_pandas(json):
 
     for row in json:
         picid = row["External ID"]
+        dataset = row["Dataset Name"]
         items = row["Label"]
+        print(items.keys())
 
-        for key in items:
-            # rejects scan info which is just clear/fuzzy/etc.
-            # if just 1-classification could be simplified
-            if not isinstance(items[key], str):
+        # for key in items:
+        # print(item)
+    #         # rejects scan info which is just clear/fuzzy/etc.
+    #         # if just 1-classification could be simplified
+    #         if not isinstance(items[key], str):
 
-                for it in items[key]:
-                    # repeated elements
-                    holder["pic"].append(picid)
+    #             for it in items[key]:
+    #                 # repeated elements
+    #                 holder["pic"].append(picid)
 
-                    save_as = "mask%s_%s.png" % (re.findall(r"\d+", picid)[0],
-                                                 0 if key == "Well-aligned"
-                                                 else 1)
-                    holder["mask"].append('%s/%s' % (mask_dir, save_as))
+    #                 save_as = "mask%s_%s.png" % (re.findall(r"\d+", picid)[0],
+    #                                              0 if key == "Well-aligned"
+    #                                              else 1)
+    #                 holder["mask"].append('%s/%s' % (mask_dir, save_as))
 
-                    # need to change for multi-color text if needed
-                    color = it['select_text_color']
-                    holder["color"].append(color[0] if len(
-                        color) == 1 else "multi-color")
+    #                 # need to change for multi-color text if needed
+    #                 color = it['select_text_color']
+    #                 holder["color"].append(color[0] if len(
+    #                     color) == 1 else "multi-color")
 
-                    holder["reading_ease"].append(
-                        it['how_easy_is_it_to_read_the_handwriting?'])
-                    holder["el_type"].append(it['type_of_handwriting_element'])
-                    holder["meaning"].append(
-                        it['what_does_the_selected_text_say?'])
-                    holder["words"].append(
-                        it['what_is_the_orientation_of_the_text_within_the_shape?'])
+    #                 holder["reading_ease"].append(
+    #                     it['how_easy_is_it_to_read_the_handwriting?'])
+    #                 holder["el_type"].append(it['type_of_handwriting_element'])
+    #                 holder["meaning"].append(
+    #                     it['what_does_the_selected_text_say?'])
+    #                 holder["words"].append(
+    #                     it['what_is_the_orientation_of_the_text_within_the_shape?'])
 
-    df = pd.DataFrame(holder)
-    df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
+    # df = pd.DataFrame(holder)
+    # df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
 
 # retrieve_masks(json_data)
+
+file = "22-10.json"
+with open(labels_dir + file, "r", encoding='utf-8') as json_file:
+    json_data = json.load(json_file)
+
 create_pandas(json_data)
