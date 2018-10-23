@@ -44,10 +44,10 @@ def retrieve_masks(json):
             print("%s retrieved" % save_as)
 
 
-def create_pandas(json):
+def create_dataframe(file):
     """
     Create dataframe where each row contains location-based
-    grouped handwritten elements; not line-separated yet
+    grouped handwritten elements, line-separated
 
     Assumes masks exported and retrieved with retrieve_masks()
     Might be better to integrate the two options
@@ -60,21 +60,19 @@ def create_pandas(json):
     ----------
     pandas dataframe
     """
-    page = defaultdict(list)
+
+    with open(labels_dir + file, "r", encoding='utf-8') as json_file:
+        json_data = json.load(json_file)
+
     elems = defaultdict(list)
-    mask_dir = "../data/masks"
+    # mask_dir = "../data/masks"
 
     error = []
-    for row in json:
+    for row in json_data:
         picid = row["External ID"]
         dataset = row["Dataset Name"]
         items = row["Label"]
         path = "../data/%s/%s" % (dataset, picid)
-
-        # per page easy, # elems of handwritten, # elems marks
-        page["hasHR"].append("contains_handwriting" in items)
-        page["pageid"].append(picid)
-        page["path"].append(path)
 
         if "Text" in items:
             if "Start of text" in items:
@@ -82,17 +80,24 @@ def create_pandas(json):
 
                     for el, pt in zip(items["Text"], items["Start of text"]):
                         elems["hwType"].append("text")
+                        elems["hasHR"].append("contains_handwriting" in items)
+                        elems["pageid"].append(picid)
+                        elems["path"].append(path)
 
                         if 'ease_in_reading' in el:
-                            elems["readability"].append(el['ease_in_reading'])
+                            elems["readability"].append(
+                                el['ease_in_reading'])
                         else:
                             error.append(("readability", row["View Label"]))
 
                         # TO DO vector direction implementation
                         # geo = elems["geometry"]
-                        elems["start_x"].append(pt["geometry"]["x"])
-                        elems["start_y"].append(pt["geometry"]["y"])
+                        # elems["start_x"].append(pt["geometry"]["x"])
+                        # elems["start_y"].append(pt["geometry"]["y"])
 
+                        # TO DO add masks
+
+                        # conditional elements
                         elems["isSig"].append("is_signature?" in el)
                         elems["isCrossed"].append("text_crossed-out" in el)
                         elems["isMarker"].append("was_marker?" in el)
@@ -109,6 +114,44 @@ def create_pandas(json):
             else:
                 error.append(("start", row["View Label"]))
 
+        if "Markings" in items:
+            for mark in items["Markings"]:
+                elems["hwType"].append("mark")
+                elems["hasHR"].append("contains_handwriting" in items)
+                elems["pageid"].append(picid)
+                elems["path"].append(path)
+
+                elems["readability"].append("")
+
+                # TO DO when vector direction implementation
+                # elems["start_x"].append(0)
+                # elems["start_y"].append(0)
+
+                # conditional elements
+                elems["isSig"].append(False)
+                elems["isCrossed"].append(False)
+                elems["isMarker"].append(False)
+                elems["isFaint"].append(False)
+                elems["transcript"].append("")
+
+        if "Text" not in items and "Markings" not in items:
+            elems["hasHR"].append("contains_handwriting" in items)
+            elems["pageid"].append(picid)
+            elems["path"].append(path)
+            elems["hwType"].append("")
+            elems["readability"].append("")
+
+            # TO DO when vector direction implementation
+            # elems["start_x"].append(0)
+            # elems["start_y"].append(0)
+
+            # conditional elements
+            elems["isSig"].append(False)
+            elems["isCrossed"].append(False)
+            elems["isMarker"].append(False)
+            elems["isFaint"].append(False)
+            elems["transcript"].append("")
+
     if len(error) > 0:
         print("[ERROR] check URLs in errors.txt and resolve issues:")
         file = open("errors.txt", "w")
@@ -116,20 +159,17 @@ def create_pandas(json):
             print("%s, \t\t%s\n" % (cause, url), file=file)
         file.close()
     else:
-        return pd.DataFrame(elems)
-
-    # df = pd.DataFrame(holder)
-    # df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
+        df = pd.DataFrame(elems)
+        return df
+        # df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
 
 # retrieve_masks(json_data)
 
 file = "22-10.json"
-with open(labels_dir + file, "r", encoding='utf-8') as json_file:
-    json_data = json.load(json_file)
-
-test = create_pandas(json_data)
-print(test[['hwType', 'readability', 'start_x', 'start_y', 'isSig', 'isCrossed',
+test = create_dataframe(file)
+print(test[['hwType', 'readability', 'isSig', 'isCrossed',
             'isMarker', 'isFaint']])
+print(sum(test.hwType == ""))
 
 
 # need out each element information of identified text and type
