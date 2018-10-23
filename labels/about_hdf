@@ -7,53 +7,53 @@
 
  Load with pd.read_hdf(<PATH/FILE>)
 
-	* DD-MM.hdf 		each text or mark element is added as a row. pages 
-						without a text or mark are added with empty values
-						for the associated columns. 
+    * DD-MM.hdf         each text or mark element is added as a row. pages 
+                        without a text or mark are added with empty values
+                        for the associated columns. 
 
-						this files comes from the MM-DD.json and is created by 
-						create_dataframe() in handle_labels.py
+                        this files comes from the MM-DD.json and is created by 
+                        create_dataframe() in handle_labels.py
 
-	* ..._hasHW.hdf 	each row is a unique picture in a given directory
-						used in CNN networks where primary goal is to say
-						whether a given page has handwriting on it or not
+    * ..._hasHW.hdf     each row is a unique picture in a given directory
+                        used in CNN networks where primary goal is to say
+                        whether a given page has handwriting on it or not
 
 
 
 # COLUMNS OF DD-MM.hdf
 
-   column	 		values					meaning
-   ------    		---------------------   --------------------------
- * hwType	 		"text", "mark", ""		type of handwritten element
- * hasHW	 		1, 0					1/0 = T/F contains handwritten element
- * pageid	 		pageXXXX.jpg		    OG image associated with row 
- * path      		../data/...				path to OG image
- * mask	     		../data/.._mask/...		path to mask for that element
- * mask_url	 		http://...				URL of mask on Labelbox
+   column             values                    meaning
+   ------            ---------------------   --------------------------
+ * hwType             "text", "mark", ""    type of handwritten element
+ * hasHW             1, 0                   1/0 = T/F contains handwritten element
+ * pageid             pageXXXX.jpg          OG image associated with row 
+ * path              ../data/...            path to OG image
+ * mask              ../data/.._mask/...    path to mask for that element
+ * mask_url          http://...             URL of mask on Labelbox
 
- * readability		"easy", "hard", 		refers to readibility as 
- 					"impossible", ""		assessed by human labeler;
- 											impossible may lack a transcription. "" should only
- 											exist for hwType = "mark", ""
+ * readability       "easy", "hard",        refers to readibility as 
+                     "impossible", ""       assessed by human labeler;
+                                            impossible may lack a transcription. "" should only
+                                            exist for hwType = "mark", ""
 
- * isSig			1, 0					is element a signature
- * isCrossed		1, 0					is element crossed out
- * isMarker			1, 0					was element written with a marker
+ * isSig            1, 0                    is element a signature
+ * isCrossed        1, 0                    is element crossed out
+ * isMarker         1, 0                    was element written with a marker
 
- * isFaint			1, 0					is the writing faint/low contrast
- 											as judged by human labeler
+ * isFaint          1, 0                    is the writing faint/low contrast
+                                                as judged by human labeler
 
- * transcript 		"...", ""				either transcribed text by human 
- 											labeler or empty string
+ * transcript       "...", ""               either transcribed text by human 
+                                            labeler or empty string
 
 # COLUMS OF DD-MM_hasHW.hdf
-   column	 		values					meaning
-   ------    		---------------------   --------------------------
- * hasHW 			1, 0					has or does not have handwritten element on page
- * pageid			pageXXXX.jpg		    OG image associated with row 
- * path 			../data/...				path to OG image
- * numLines			0, ...					number of hwType="text" for a page
- * numSigs			0, ...					sums isSigs for a page
- * hasFaint			1, 0					max value of isFaint for a page
- * hasMarker		1, 0					max value of isMarker for a page
- * hasCrossed		1, 0					max value of isCrossed for a page
+   column             values                    meaning
+   ------            ---------------------   --------------------------
+ * hasHW             1, 0                    has or does not have handwritten element on page
+ * pageid            pageXXXX.jpg            OG image associated with row 
+ * path             ../data/...                path to OG image
+ * numLines            0, ...                    number of hwType="text" for a page
+ * numSigs            0, ...                    sums isSigs for a page
+ * hasFaint            1, 0                    max value of isFaint for a page
+ * hasMarker        1, 0                    max value of isMarker for a page
+ * hasCrossed        1, 0                    max value of isCrossed for a page
