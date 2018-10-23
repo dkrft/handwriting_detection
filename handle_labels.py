@@ -2,49 +2,17 @@
 
 from collections import defaultdict
 import json
+import os
 import pandas as pd
 import re
+import subprocess
+import urllib.request
+
 
 labels_dir = "./labels/"
 
 
-def retrieve_masks(json):
-    """
-    Download all masks using wget to save in mask<pic#>_<mask#>.jpg
-
-    Parameters
-    ----------
-    json : json file from Labelbox
-
-    Returns
-    ----------
-    files saved to ../data/masks
-
-
-    """
-    import os
-    import subprocess
-
-    save_dir = "../data/masks"
-    subprocess.Popen("mkdir -p " + save_dir, shell=True, executable='/bin/bash')
-
-    for row in json:
-        ids = re.findall(r"\d+", row["External ID"])[0]
-        masks = row["Masks"]
-        for it, key in enumerate(masks.keys()):
-            url = masks[key]
-
-            # change if all one mask type
-            # currently 0 would be well-aligned and 1 for difficult
-            save_as = "mask%s_%s.png" % (ids, it)
-            args = ['wget', '-O', '%s/%s' % (save_dir, save_as), url]
-            p = subprocess.Popen(args, stdout=subprocess.PIPE)
-            # makes so terminates in console but runs slower as checking each
-            os.waitpid(p.pid, 0)
-            print("%s retrieved" % save_as)
-
-
-def create_dataframe(file):
+def create_dataframe(filename):
     """
     Create dataframe where each row contains location-based
     grouped handwritten elements, line-separated
@@ -54,35 +22,40 @@ def create_dataframe(file):
 
     Parameters
     ----------
-    json : json file
+    file: name of JSON file in ./labels that you wish to create dataframe for
 
     Returns
     ----------
-    pandas dataframe
+    pandas dataframe in saved hdf in ./labels
     """
 
-    with open(labels_dir + file, "r", encoding='utf-8') as json_file:
+    with open(labels_dir + filename, "r", encoding='utf-8') as json_file:
         json_data = json.load(json_file)
 
     elems = defaultdict(list)
-    # mask_dir = "../data/masks"
-
     error = []
+
     for row in json_data:
         picid = row["External ID"]
-        dataset = row["Dataset Name"]
+        dataset = row["Dataset Name"].replace("(", "_")
         items = row["Label"]
+        masks = [] if "Masks" not in row else row["Masks"]
         path = "../data/%s/%s" % (dataset, picid)
 
         if "Text" in items:
             if "Start of text" in items:
                 if len(items["Text"]) == len(items["Start of text"]):
 
+                    mask_file = "../data/%s/text_mask/%s" % (
+                        dataset, picid.split(".")[0])
+
                     for el, pt in zip(items["Text"], items["Start of text"]):
                         elems["hwType"].append("text")
                         elems["hasHR"].append("contains_handwriting" in items)
                         elems["pageid"].append(picid)
                         elems["path"].append(path)
+                        elems["mask"].append(mask_file)
+                        elems["mask_url"].append(masks["Text"])
 
                         if 'ease_in_reading' in el:
                             elems["readability"].append(
@@ -115,11 +88,16 @@ def create_dataframe(file):
                 error.append(("start", row["View Label"]))
 
         if "Markings" in items:
+            mask_file = "../data/%s/mark_mask/%s" % (
+                dataset, picid.split(".")[0])
+
             for mark in items["Markings"]:
                 elems["hwType"].append("mark")
                 elems["hasHR"].append("contains_handwriting" in items)
                 elems["pageid"].append(picid)
                 elems["path"].append(path)
+                elems["mask"].append(mask_file)
+                elems["mask_url"].append(masks["Markings"])
 
                 elems["readability"].append("")
 
@@ -140,6 +118,8 @@ def create_dataframe(file):
             elems["path"].append(path)
             elems["hwType"].append("")
             elems["readability"].append("")
+            elems["mask"].append("")
+            elems["mask_url"].append("")
 
             # TO DO when vector direction implementation
             # elems["start_x"].append(0)
@@ -160,14 +140,37 @@ def create_dataframe(file):
         file.close()
     else:
         df = pd.DataFrame(elems)
-        return df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
+        return df.to_hdf(labels_dir + re.sub(r'\.json$', '', filename) + ".hdf",
+                         "data")
 
-# retrieve_masks(json_data)
 
-file = "22-10.json"
-test = create_dataframe(file)
+def retrieve_mask(url, save_file):
+    """
+    Download all masks using wget to save in mask<pic#>_<mask#>.jpg
+
+    Parameters
+    ----------
+    json : json file from Labelbox
+
+    Returns
+    ----------
+    files saved to ../data/masks
+
+
+    """
+    print('ok')
+    # save_dir = os.path.dirname(save_file)
+
+    # # running a lot of unnecessary commands now :(
+    # subprocess.Popen("mkdir -p " + save_dir, shell=True, executable='/bin/bash')
+
+    # # very slow....wget faster?
+    # urllib.request.urlretrieve(url, save_file)
+
+name = "22-10.json"
+create_dataframe(name)
 
 
 # need out each element information of identified text and type
 # need way to easily convert into hasHR or not
-# to do: separate fct to robustly check that no/yes keys correctly kept
+# to do: robustly check that no/yes keys correctly kept
