@@ -11,6 +11,8 @@ import urllib.request
 
 labels_dir = "./labels/"
 master_hdf = lambda f: labels_dir + re.sub(r'\.json$', '', f) + ".hdf"
+sub_hdf = lambda f, m: labels_dir + \
+    re.sub(r'\.json$', '', f) + "%s" % m + ".hdf"
 
 
 def create_dataframe(filename):
@@ -23,7 +25,7 @@ def create_dataframe(filename):
 
     Parameters
     ----------
-    file: name of JSON file in ./labels that you wish to create dataframe for
+    filename: JSON file in ./labels that you wish to create dataframe for
 
     Returns
     ----------
@@ -52,7 +54,7 @@ def create_dataframe(filename):
 
                     for el, pt in zip(items["Text"], items["Start of text"]):
                         elems["hwType"].append("text")
-                        elems["hasHR"].append("contains_handwriting" in items)
+                        elems["hasHW"].append(1)
                         elems["pageid"].append(picid)
                         elems["path"].append(path)
                         elems["mask"].append(mask_file)
@@ -66,16 +68,14 @@ def create_dataframe(filename):
 
                         # TO DO vector direction implementation
                         # geo = elems["geometry"]
-                        # elems["start_x"].append(pt["geometry"]["x"])
-                        # elems["start_y"].append(pt["geometry"]["y"])
-
-                        # TO DO add masks
+                        elems["start_x"].append(pt["geometry"]["x"])
+                        elems["start_y"].append(pt["geometry"]["y"])
 
                         # conditional elements
-                        elems["isSig"].append("is_signature?" in el)
-                        elems["isCrossed"].append("text_crossed-out" in el)
-                        elems["isMarker"].append("was_marker?" in el)
-                        elems["isFaint"].append("is_faint?" in el)
+                        elems["isSig"].append(int("is_signature?" in el))
+                        elems["isCrossed"].append(int("text_crossed-out" in el))
+                        elems["isMarker"].append(int("was_marker?" in el))
+                        elems["isFaint"].append(int("is_faint?" in el))
                         if "transcription" in el:
                             elems["transcript"].append(el["transcription"])
                         else:
@@ -94,7 +94,7 @@ def create_dataframe(filename):
 
             for mark in items["Markings"]:
                 elems["hwType"].append("mark")
-                elems["hasHR"].append("contains_handwriting" in items)
+                elems["hasHW"].append(1)
                 elems["pageid"].append(picid)
                 elems["path"].append(path)
                 elems["mask"].append(mask_file)
@@ -103,18 +103,18 @@ def create_dataframe(filename):
                 elems["readability"].append("")
 
                 # TO DO when vector direction implementation
-                # elems["start_x"].append(0)
-                # elems["start_y"].append(0)
+                elems["start_x"].append(0)
+                elems["start_y"].append(0)
 
                 # conditional elements
-                elems["isSig"].append(False)
-                elems["isCrossed"].append(False)
-                elems["isMarker"].append(False)
-                elems["isFaint"].append(False)
+                elems["isSig"].append(0)
+                elems["isCrossed"].append(0)
+                elems["isMarker"].append(0)
+                elems["isFaint"].append(0)
                 elems["transcript"].append("")
 
         if "Text" not in items and "Markings" not in items:
-            elems["hasHR"].append("contains_handwriting" in items)
+            elems["hasHW"].append(0)
             elems["pageid"].append(picid)
             elems["path"].append(path)
             elems["hwType"].append("")
@@ -123,14 +123,14 @@ def create_dataframe(filename):
             elems["mask_url"].append("")
 
             # TO DO when vector direction implementation
-            # elems["start_x"].append(0)
-            # elems["start_y"].append(0)
+            elems["start_x"].append(0)
+            elems["start_y"].append(0)
 
             # conditional elements
-            elems["isSig"].append(False)
-            elems["isCrossed"].append(False)
-            elems["isMarker"].append(False)
-            elems["isFaint"].append(False)
+            elems["isSig"].append(0)
+            elems["isCrossed"].append(0)
+            elems["isMarker"].append(0)
+            elems["isFaint"].append(0)
             elems["transcript"].append("")
 
     if len(error) > 0:
@@ -160,7 +160,6 @@ def retrieve_masks(df):
     ----------
     might be able to improve with a sleep function between wget calls;
     instead of using urllib.
-
     """
 
     # reject where mask not set to value
@@ -195,8 +194,39 @@ def retrieve_masks(df):
         print("Rerun retrieve_masks until receive message that all masks downloaded")
 
 
+def hasHW_dataframe(df, filename):
+    """
+    Reduce master dataframe to dataframe with summary values and whether
+    or not page has handwritten elements
+
+    Parameters
+    ----------
+    df : dataframe from create_dataframe
+    filename: JSON file in ./labels that you wish to create dataframe for
+
+    Returns
+    ----------
+    pandas dataframe in saved hdf in ./labels
+    """
+
+    base = df.copy()
+
+    aggs = {'hwType': lambda x: sum(x == "text"), "isSig": "sum",
+            "isFaint": "max", "isMarker": "max", "isCrossed": "max"}
+    renames = {'hwType': "numLines", "isSig": "numSigs", "isFaint": "hasFaint",
+               "isMarker": "hasMarker", "isCrossed": "hasCrossed"}
+
+    hasHW = base.groupby(["hasHW", "pageid", 'path'], as_index=False).agg(
+        aggs).rename(columns=renames)
+
+    hasHW.to_hdf(sub_hdf(filename, "_hasHW"), "data")
+
+
+# just change file name to new one in labels/ and switch to True block you
+# want to run
 name = "22-10.json"
-if True:  # create master dataframe
+
+if False:  # create master dataframe
     create_dataframe(name)
 
 if True:  # use master dateframe for selections, syncing data, etc.
@@ -205,8 +235,11 @@ if True:  # use master dateframe for selections, syncing data, etc.
     # sync masks and images
     retrieve_masks(master)
 
+    # create hasHW dataframe
+    hasHW_dataframe(master, name)
 
-# need out each element information of identified text and type
-# need way to easily convert into hasHR or not
+
 # to do: robustly check that no/yes keys correctly kept
-# readme file
+
+# make pseudo randomizer based on current data to get somewhat equal pops
+# with different key characteristics: hasHW or not, ...
