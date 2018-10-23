@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 import json
-# import pandas as pd
+import pandas as pd
 import re
 
 labels_dir = "./labels/"
@@ -78,64 +78,45 @@ def create_pandas(json):
 
         if "Text" in items:
             if "Start of text" in items:
-                text_el = items["Text"]
-                point_el = items["Start of text"]
-                if len(text_el) == len(point_el):
-                    for el in items["Text"]:
-                        elems[""]
-                        elems["is_sig"].append("is_signature?" in el)
-                        elems["readability"].append(el['ease_in_reading'])
+                if len(items["Text"]) == len(items["Start of text"]):
+
+                    for el, pt in zip(items["Text"], items["Start of text"]):
+                        elems["hwType"].append("text")
+
+                        if 'ease_in_reading' in el:
+                            elems["readability"].append(el['ease_in_reading'])
+                        else:
+                            error.append(("readability", row["View Label"]))
+
+                        # TO DO vector direction implementation
+                        # geo = elems["geometry"]
+                        elems["start_x"].append(pt["geometry"]["x"])
+                        elems["start_y"].append(pt["geometry"]["y"])
+
+                        elems["isSig"].append("is_signature?" in el)
+                        elems["isCrossed"].append("text_crossed-out" in el)
+                        elems["isMarker"].append("was_marker?" in el)
+                        elems["isFaint"].append("is_faint?" in el)
+                        if "transcription" in el:
+                            elems["transcript"].append(el["transcription"])
+                        else:
+                            elems["transcript"].append("")
 
                 # every Text should have a Start of Text item
                 else:
-                    error.append(row["View Label"])
-
+                    error.append(("start", row["View Label"]))
             # every Text should have a Start of Text item
             else:
-                error.append(row["View Label"])
+                error.append(("start", row["View Label"]))
 
-        if len(error) > 0:
-            print("[ERROR] check URLs for missing Start of Text elements:")
-            for err in error:
-                print(err)
-            print("\nAfter resolving, export and try again.")
-            return
-        else:
-            return  # dataframe
-
-        # from Text
-        # page["num_hw"] =
-        # page["num_sig"] =
-        # page["num_faint"] =
-
-        # from Markings
-        # page["num_marks"] =
-
-    #         # rejects scan info which is just clear/fuzzy/etc.
-    #         # if just 1-classification could be simplified
-    #         if not isinstance(items[key], str):
-
-    #             for it in items[key]:
-    #                 # repeated elements
-    #                 holder["pic"].append(picid)
-
-    #                 save_as = "mask%s_%s.png" % (re.findall(r"\d+", picid)[0],
-    #                                              0 if key == "Well-aligned"
-    #                                              else 1)
-    #                 holder["mask"].append('%s/%s' % (mask_dir, save_as))
-
-    #                 # need to change for multi-color text if needed
-    #                 color = it['select_text_color']
-    #                 holder["color"].append(color[0] if len(
-    #                     color) == 1 else "multi-color")
-
-    #                 holder["reading_ease"].append(
-    #                     it['how_easy_is_it_to_read_the_handwriting?'])
-    #                 holder["el_type"].append(it['type_of_handwriting_element'])
-    #                 holder["meaning"].append(
-    #                     it['what_does_the_selected_text_say?'])
-    #                 holder["words"].append(
-    #                     it['what_is_the_orientation_of_the_text_within_the_shape?'])
+    if len(error) > 0:
+        print("[ERROR] check URLs in errors.txt and resolve issues:")
+        file = open("errors.txt", "w")
+        for cause, url in error:
+            print("%s, \t\t%s\n" % (cause, url), file=file)
+        file.close()
+    else:
+        return pd.DataFrame(elems)
 
     # df = pd.DataFrame(holder)
     # df.to_hdf(labels_dir + re.sub(r'\.json$', '', file) + ".hdf", "data")
@@ -146,8 +127,11 @@ file = "22-10.json"
 with open(labels_dir + file, "r", encoding='utf-8') as json_file:
     json_data = json.load(json_file)
 
-create_pandas(json_data)
+test = create_pandas(json_data)
+print(test[['hwType', 'readability', 'start_x', 'start_y', 'isSig', 'isCrossed',
+            'isMarker', 'isFaint']])
 
 
 # need out each element information of identified text and type
 # need way to easily convert into hasHR or not
+# to do: separate fct to robustly check that no/yes keys correctly kept
