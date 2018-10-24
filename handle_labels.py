@@ -2,9 +2,11 @@
 
 from collections import defaultdict
 import json
+import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import re
+import seaborn as sns
 import subprocess
 import urllib.request
 
@@ -177,7 +179,6 @@ def retrieve_masks(df):
                 count += 1
                 continue
             else:
-                print(url)
                 urllib.request.urlretrieve(url, loc)
         else:
             args = ['wget', '-O', loc, url]
@@ -224,6 +225,111 @@ def hasHW_dataframe(df, filename):
     hasHW.to_hdf(sub_hdf(filename, "_hasHW"), "data")
 
 
+def stats(filename):
+    """
+    Generate statistics on HW elements from
+    master_hdf and hasHW df
+
+    Parameters
+    ----------
+    filename: original json string
+
+    Returns
+    ----------
+    plots
+    """
+    df = pd.read_hdf(master_hdf(filename))
+    hasHW = pd.read_hdf(sub_hdf(filename, "_hasHW"))
+
+    # hist. line width
+
+    # hist. line height
+
+    # hist. no. characters
+
+    # hist. no. lines per page
+
+    # bar of types of marks
+
+    # bar of readibility + signatures
+    sns.countplot(x="readability", data=df)
+    plt.show()
+
+
+def uniform_randomizer(df_hasHW, level, samples=None, save_as="hdf"):
+    """
+    Create dataframe, folder, or whatever is needed for input into a NN
+    or other ML system
+
+    Parameters
+    ----------
+    df_hasHW : dataframe from hasHW_dataframe()
+
+    level: 'all' : pages with a handwritten text and/or mark counted in HW set
+           'text' : only pages with HW text counted in HW set; may have marks
+
+           (not yet implemented)
+           'only_text' : only pages with HW text counted in HW set; no marks
+
+    samples: no. of pages of ea. no and (yes) handwritten elements
+             would you like; if None, smaller dataset used as limiting factor
+
+    save_as: "return": returns dataframe for use
+             "hdf": saves HDF with 6-digit hash
+             "folder": copies imgs to foler with 6-digit hash & creates hdf
+
+    Returns
+    ----------
+
+    """
+    import random
+    import string
+
+    HW_mask = {"all": (df_hasHW.hasHW == 1),
+               "text": (df_hasHW.numLines > 0)}
+
+    no_HW = df_hasHW[df_hasHW.hasHW == 0].copy()
+    yes_HW = df_hasHW[HW_mask[level]].copy()
+
+    # sampling performed without replacement
+    def sampler(val):
+        data = pd.concat([no_HW.sample(val), yes_HW.sample(val)])
+
+        if save_as == "return":
+            return data
+        elif save_as == "hdf":
+            file_id = ''.join(random.choices(
+                string.ascii_uppercase + string.digits, k=6))
+            # TO DO & add to file with specifications
+            print("ok")
+        elif save_as == "folder":
+            print("ok")
+            # TO DO & add to file with specifications
+            # need to make sure names are unique...adding mapping
+
+    # if requested sample larger than a population, no data produced
+    if isinstance(samples, int) and samples > no_HW.shape[0]:
+        print("[ERROR] Requested %s samples, but no HW set has %s pages" %
+              (samples, no_HW.shape[0]))
+    elif isinstance(samples, int) and samples > yes_HW.shape[0]:
+        print("[ERROR] Requested %s samples, but HW set has %s pages" %
+              (samples, yes_HW.shape[0]))
+    else:
+        # lots of checks. essentially whatever is small determines sample size
+        if isinstance(samples, int):
+            print("Sampling %s pages from each set." % samples)
+            sampler(samples)
+
+        elif no_HW.shape[0] <= yes_HW.shape[0]:
+            print("Only %s in no HW set. Sampling from each set." %
+                  no_HW.shape[0])
+            sampler(no_HW.shape[0])
+        else:
+            print("Only %s in HW set. Sampling from each set." %
+                  yes_HW.shape[0])
+            sampler(yes_HW.shape[0])
+
+
 # just change file name to new one in labels/ and switch to True block you
 # want to run
 name = "22-10.json"
@@ -231,7 +337,7 @@ name = "22-10.json"
 if False:  # create master dataframe
     create_dataframe(name)
 
-if True:  # use master dateframe for selections, syncing data, etc.
+if False:  # use master dateframe for selections, syncing data, etc.
     master = pd.read_hdf(master_hdf(name))
 
     # sync masks and images
@@ -240,8 +346,12 @@ if True:  # use master dateframe for selections, syncing data, etc.
     # create hasHW dataframe
     hasHW_dataframe(master, name)
 
+if False:  # use hasHW dataframe for selection into NN, etc.
+    hasHW = pd.read_hdf(sub_hdf(name, "_hasHW"))
+    uniform_randomizer(hasHW, "text", samples=50)
+
+
+if True:  # generate histograms of data
+    stats(name)
 
 # to do: robustly check that no/yes keys correctly kept
-
-# make pseudo randomizer based on current data to get somewhat equal pops
-# with different key characteristics: hasHW or not, ...

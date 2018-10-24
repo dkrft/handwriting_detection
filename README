@@ -39,7 +39,7 @@
 # PROCESSING NEW DATA
 
  1. [In Dropbox]
-    * To avoid accidentally re-adding data to Labelbox, new data should be first acculumated in a   sub-folder img/ within a folder named with the current date (DD-MM); for example:
+    * To avoid accidentally re-adding data to Labelbox, new data should be first acculumated in a sub-folder img/ within a folder named with the current date (DD-MM); for example:
     23-10/img/
 
     Once the new set of data is ready, it should be uploaded to the Labelbox account with the dataset name being that of the date of the folder (DD-MM). Preferably, all images being uploaded should have a unique number following the form pagexxxx.jpg where x represents sequential digits that are larger than the last uploaded file.
