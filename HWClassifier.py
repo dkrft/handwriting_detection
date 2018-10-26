@@ -114,7 +114,7 @@ def main():
     print('model created')
 
     # uncomment the following code block to create and store the data set from files in training data
-    training_data = create_training_data()
+    #training_data = create_training_data()
     #with open('training_data/data_set.pkl', 'wb+') as f:
     #    pickle.dump(training_data, f, pickle.HIGHEST_PROTOCOL)
     #print('training data created and saved')
