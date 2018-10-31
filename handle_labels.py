@@ -115,6 +115,31 @@ def create_dataframe(filename):
                 elems["isFaint"].append(0)
                 elems["transcript"].append("")
 
+        if "Machine signature" in items:
+            mask_file = "../data/%s/machine_mask/%s.png" % (
+                dataset, picid.split(".")[0])
+
+            for sig in items["Machine signature"]:
+                elems["hwType"].append("mark")
+                elems["hasHW"].append(0)
+                elems["pageid"].append(picid)
+                elems["path"].append(path)
+                elems["mask"].append(mask_file)
+                elems["mask_url"].append(masks["Machine signature"])
+
+                elems["readability"].append("")
+
+                # TO DO when vector direction implementation
+                elems["start_x"].append(0)
+                elems["start_y"].append(0)
+
+                # conditional elements
+                elems["isSig"].append(0)
+                elems["isCrossed"].append(0)
+                elems["isMarker"].append(0)
+                elems["isFaint"].append(0)
+                elems["transcript"].append("")
+
         if "Text" not in items and "Markings" not in items:
             elems["hasHW"].append(0)
             elems["pageid"].append(picid)
@@ -332,9 +357,9 @@ def uniform_randomizer(df_hasHW, level, samples=None, save_as="hdf"):
 
 # just change file name to new one in labels/ and switch to True block you
 # want to run
-name = "22-10.json"
+name = "26-10.json"
 
-if False:  # create master dataframe
+if True:  # create master dataframe
     create_dataframe(name)
 
 if False:  # use master dateframe for selections, syncing data, etc.
@@ -351,7 +376,7 @@ if False:  # use hasHW dataframe for selection into NN, etc.
     uniform_randomizer(hasHW, "text", samples=50)
 
 
-if True:  # generate histograms of data
+if False:  # generate histograms of data
     stats(name)
 
 # to do: robustly check that no/yes keys correctly kept
