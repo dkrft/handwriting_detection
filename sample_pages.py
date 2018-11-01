@@ -1,4 +1,5 @@
 from skimage import draw, io
+import cv2
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,9 +7,10 @@ import numpy as np
 from collections import defaultdict
 
 tuner = defaultdict(list)
+save_dir = "../data/samples/"
 
 
-def random_crop(dims, img, mask, samples=30, box=100, side=20):
+def random_crop(id, dims, img, mask="", samples=10, box=100, side=15):
     """
     Create x random selections of a page with a fixed box size
 
@@ -42,8 +44,9 @@ def random_crop(dims, img, mask, samples=30, box=100, side=20):
         rand_w = np.random.randint(0, w - box)
 
         crop_img = img[rand_h:rand_h + box, rand_w:rand_w + box]
-        # io.imshow(crop_img)
-        # plt.show()
+
+        if mask == "":
+            cv2.imwrite(save_dir + "no_mask/%s_%i.png" % (pageid, it), crop_img)
 
         # TO DO apply cropped mask and variance threshold (NEED TO STUDY)
         # or keep within center of box with side modifications
@@ -51,36 +54,68 @@ def random_crop(dims, img, mask, samples=30, box=100, side=20):
         # typically pure white or close to it
         # threhold value of 60 helps but the passing ones
         # range from 300-700 positive pixels which are in line with positives
+        else:
 
-        crop_mask = np.array(mask[rand_h:rand_h + box,
-                                  rand_w:rand_w + box])
+            crop_mask = np.array(mask[rand_h:rand_h + box,
+                                      rand_w:rand_w + box])
+            mask_img = cv2.bitwise_and(crop_img, crop_img, mask=crop_mask)
 
-        # has indent
-        sub_mask = np.array(mask[rand_h + side:rand_h + box - side,
-                                 rand_w + side:rand_w + box - side])
+            whites = sum(mask_img.flatten() == 0)
 
-        # TO DO decide on threshold value or use any to expedite search
-        whites = (sub_mask == [0, 0, 0, 255]).all(-1)
+            # has indent
+            sub_mask = np.array(mask[rand_h + side:rand_h + box - side,
+                                     rand_w + side:rand_w + box - side])
 
-        if sum(~whites.flatten()) > 0:
+            # TO DO decide on threshold value or use any to expedite search
+            sub_whites = sum(sub_mask.flatten() == 255)
 
-            # creates mask from mask to identify black pixels
-            img_mask = (crop_mask == [0, 0, 0, 255]).all(-1)
-            # filter cropped image to black-out all but the selected pixels
-            masked_img = np.where(~img_mask[..., None], crop_img, 0)
+            if sub_whites > 0:
 
-            # look at image and filtered image
-            io.imshow(crop_img)
-            plt.show()
+                # look at image
+                # plt.imshow(crop_img)
+                # plt.show()
 
-            io.imshow(masked_img)
-            plt.show()
+                # look at filtered image
+                plt.imshow(mask_img)
+                plt.show()
 
-            tuner["sum_whites_sub"].append(sum(~whites.flatten()))
-            tuner["sum_whites"].append(sum(~img_mask.flatten()))
-            # tuner["true"].append(input('Good (y) / bad (n):'))
+                tuner["sum_whites_sub"].append(sub_whites)
+                tuner["sum_whites"].append(whites)
 
-    print(tuner)
+                # excludes mask
+                mean, stdDev = cv2.meanStdDev(crop_img, mask=crop_mask)
+
+                tuner["mean_r"].append(mean[0])
+                tuner["mean_g"].append(mean[1])
+                tuner["mean_b"].append(mean[2])
+
+                tuner["std_r"].append(stdDev[0])
+                tuner["std_g"].append(stdDev[1])
+                tuner["std_b"].append(stdDev[2])
+
+                # includes mask elements
+                mean2, stdDev2 = cv2.meanStdDev(crop_img)
+
+                tuner["mean_r_bkg"].append(mean2[0])
+                tuner["mean_g_bkg"].append(mean2[1])
+                tuner["mean_b_bkg"].append(mean2[2])
+
+                tuner["std_r_bkg"].append(stdDev2[0])
+                tuner["std_g_bkg"].append(stdDev2[1])
+                tuner["std_b_bkg"].append(stdDev2[2])
+
+                path = save_dir + "hw_mask/in_samp/%s_%i.png" % (pageid, it)
+                tuner["path"].append(path)
+
+                tuner["pen"].append(input('mark y / n?'))
+                tuner["char"].append(input('char(s) y / n?'))
+                tuner["edge"].append(input('on edge y / n?'))
+
+                cv2.imwrite(path, crop_img)
+            else:
+                cv2.imwrite(save_dir + "hw_mask/not_in_samp/%s_%i.png" %
+                            (pageid, it), crop_img)
+
 
 data = pd.read_hdf("labels/26-10.hdf")
 
@@ -89,23 +124,34 @@ sel = data.groupby(["pageid", "hwType"], as_index=False).first()
 
 dims = defaultdict(list)
 for index, row in sel.iterrows():
+    pageid = (row["path"].split(".jpg")[0]).split("/")[2:5]
+    pageid = "_".join(pageid)
 
     # 0 import in image and mask
-    img = io.imread(row["path"])
+    img = cv2.imread(row["path"])
     h, w = img.shape[:2]
     dims["height"].append(h)
     dims["width"].append(w)
 
     # only need to check mask if hasHW
     if row.hwType != "":
-        mask = io.imread(row["mask"])
+
+        # comes in inverted from saved png
+        mask = cv2.imread(row["mask"], 0)
         m_h, m_w = mask.shape[:2]
         dims["m_h"].append(m_h)
         dims["m_w"].append(m_w)
 
         # 1: select random box(es) for CNN
-        random_crop((h, w), img, mask)
+        random_crop(pageid, (h, w), img, mask)
+    else:
+        random_crop(pageid, (h, w), img)
 
-    break
+samples = pd.DataFrame(tuner)
+samples.to_hdf("threshold.hdf")
+
+dimensions = pd.DataFrame(dims)
+dimensions.to_hdf("page_dims.hdf")
+
 
 # TO DO | 2D histogram of page dimensions
