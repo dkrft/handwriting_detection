@@ -61,6 +61,7 @@ def create_dataframe(filename):
                         elems["path"].append(path)
                         elems["mask"].append(mask_file)
                         elems["mask_url"].append(masks["Text"])
+                        elems["geometry"].append(el["geometry"])
 
                         if 'ease_in_reading' in el:
                             elems["readability"].append(
@@ -101,6 +102,7 @@ def create_dataframe(filename):
                 elems["path"].append(path)
                 elems["mask"].append(mask_file)
                 elems["mask_url"].append(masks["Markings"])
+                elems["geometry"].append(mark["geometry"])
 
                 elems["readability"].append("")
 
@@ -120,12 +122,13 @@ def create_dataframe(filename):
                 dataset, picid.split(".")[0])
 
             for sig in items["Machine signature"]:
-                elems["hwType"].append("mark")
+                elems["hwType"].append("mach_sig")
                 elems["hasHW"].append(0)
                 elems["pageid"].append(picid)
                 elems["path"].append(path)
                 elems["mask"].append(mask_file)
                 elems["mask_url"].append(masks["Machine signature"])
+                elems["geometry"].append(sig["geometry"])
 
                 elems["readability"].append("")
 
@@ -148,6 +151,7 @@ def create_dataframe(filename):
             elems["readability"].append("")
             elems["mask"].append("")
             elems["mask_url"].append("")
+            elems["geometry"].append({'x': 0, 'y': 0})
 
             # TO DO when vector direction implementation
             elems["start_x"].append(0)

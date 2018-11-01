@@ -2,11 +2,13 @@ from skimage import draw, io
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import IPython
+# import IPython
 from collections import defaultdict
 
+tuner = defaultdict(list)
 
-def random_crop(dims, img, mask, samples=100, box=200, side=10):
+
+def random_crop(dims, img, mask, samples=30, box=100, side=20):
     """
     Create x random selections of a page with a fixed box size
 
@@ -36,8 +38,8 @@ def random_crop(dims, img, mask, samples=100, box=200, side=10):
 
     for it in range(samples):
         # - bottom left pixel of box -
-        rand_h = np.random.randint(0, h - 1 - box)
-        rand_w = np.random.randint(0, w - 1 - box)
+        rand_h = np.random.randint(0, h - box)
+        rand_w = np.random.randint(0, w - box)
 
         crop_img = img[rand_h:rand_h + box, rand_w:rand_w + box]
         # io.imshow(crop_img)
@@ -45,20 +47,40 @@ def random_crop(dims, img, mask, samples=100, box=200, side=10):
 
         # TO DO apply cropped mask and variance threshold (NEED TO STUDY)
         # or keep within center of box with side modifications
-        crop_mask = np.array(mask[rand_h + side:rand_h + box - side,
-                                  rand_w + side:rand_w + box - side])
+        # TO TUNE FURTHER; about 1 out of every 500 false positive
+        # typically pure white or close to it
+        # threhold value of 60 helps but the passing ones
+        # range from 300-700 positive pixels which are in line with positives
 
-        whites = [0 if (pixel == [0, 0, 0, 255]).all()
-                  else 1 for row in crop_mask for pixel in row]
+        crop_mask = np.array(mask[rand_h:rand_h + box,
+                                  rand_w:rand_w + box])
 
-        if sum(whites) > 0:
-            print(sum(whites))
+        # has indent
+        sub_mask = np.array(mask[rand_h + side:rand_h + box - side,
+                                 rand_w + side:rand_w + box - side])
+
+        # TO DO decide on threshold value or use any to expedite search
+        whites = (sub_mask == [0, 0, 0, 255]).all(-1)
+
+        if sum(~whites.flatten()) > 0:
+
+            # creates mask from mask to identify black pixels
+            img_mask = (crop_mask == [0, 0, 0, 255]).all(-1)
+            # filter cropped image to black-out all but the selected pixels
+            masked_img = np.where(~img_mask[..., None], crop_img, 0)
+
+            # look at image and filtered image
             io.imshow(crop_img)
             plt.show()
 
-            io.imshow(crop_mask)
+            io.imshow(masked_img)
             plt.show()
-        # print(np.unique(np.array(crop_mask), axis=1))
+
+            tuner["sum_whites_sub"].append(sum(~whites.flatten()))
+            tuner["sum_whites"].append(sum(~img_mask.flatten()))
+            # tuner["true"].append(input('Good (y) / bad (n):'))
+
+    print(tuner)
 
 data = pd.read_hdf("labels/26-10.hdf")
 
@@ -85,25 +107,5 @@ for index, row in sel.iterrows():
         random_crop((h, w), img, mask)
 
     break
-#     # selects pixel of top left corner
-#     # np.random.randint(0, high=height)
-# IPython.embed()
 
-# print(row["mask"])
-# mask = io.imread(row["mask"])
-# print(mask[0][0])
-# # print(mask[0] == [0, 0, 0, 255])
-
-# # print(img)
-# m_h, m_w = mask.shape[:2]
-# i_h, i_w = img.shape[:2]
-# # io.imshow(img)
-# # plt.show()
-# break
-# if abs(m_h - i_h) > 0 or abs(m_w - i_w) > 0:
-#     print(img.shape, mask.shape)
-
-# mask = io.imread()
-# print(data.columns)
-# image = io.imread("/home/ariel/Dropbox/Training Data/26-10/img/page_0252.jpg")
-# print(image.shape[:2])
+# TO DO | 2D histogram of page dimensions
