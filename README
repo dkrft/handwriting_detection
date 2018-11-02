@@ -62,3 +62,6 @@
 
 # FURTHER INFORMATION
  Checkout the about_json and about_hdf to learn more about the data currently stored and how to access additional features.
+
+ # CAVEATS
+ Machine signatures (hwType=mach_sig) may be on pages with or without handwritten elements. As these items, themselves are not handwritten, they have hasHW = 0. When condensing dataframes for page identification, ensure that hasHW's aggregate uses max.

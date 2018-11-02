@@ -147,8 +147,12 @@ for index, row in sel.iterrows():
     else:
         random_crop(pageid, (h, w), img)
 
-samples = pd.DataFrame(tuner)
-samples.to_hdf("threshold.hdf")
+    if index % 5 == 0:
+        samples = pd.DataFrame(tuner)
+        samples.to_hdf("threshold.hdf")
+        tuner = defaultdict(list)
+        if index == 10:
+            break
 
 dimensions = pd.DataFrame(dims)
 dimensions.to_hdf("page_dims.hdf")
