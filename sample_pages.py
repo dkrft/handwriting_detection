@@ -13,10 +13,9 @@ save_dir = "../data/samples/"
 
 
 def sampler(hdf):
-    pixel_maps = []
-    labels = []
+    f = open("random_26-10_100ea_2.pkl", "wb")
 
-    def random_crops(pid, img, masks="", samples=100, box=150, side=20,
+    def random_crops(pid, img, masks="", samples=250, box=150, side=20,
                      keep_mach_sigs=0, save=0):
         """
         Create x random selections of a page with a fixed box size
@@ -42,6 +41,8 @@ def sampler(hdf):
         saved cropped version of img
 
         """
+        pixel_maps = []
+        labels = []
 
         h, w = img.shape[:2]
         it = 0
@@ -161,13 +162,16 @@ def sampler(hdf):
 
                         it += 1
 
+        pickle.dump(pixel_maps, f)
+        pickle.dump(labels, f)
+        pickle.dump(pid, f)
+
     data = pd.read_hdf(hdf)
 
     # reducing data to first element to only load img/mask once
     sel = data.groupby(["pageid", "hwType"], as_index=False).first()
 
     count = 0
-    f = open("random_26-10_100ea_2.pkl", "wb")
     for name, group in sel.groupby(["pageid", "path"], as_index=False):
         count += 1
 
@@ -206,12 +210,6 @@ def sampler(hdf):
 
         print(count)
 
-        pickle.dump(pixel_maps, f)
-        pickle.dump(labels, f)
-
-        pixel_maps = []
-        labels = []
-
 
 def equalizer(pkl, n):
     f = open(pkl, "rb")
@@ -246,7 +244,7 @@ def equalizer(pkl, n):
 
 sampler("labels/26-10.hdf")
 
-# equalizer("random_26-10_100ea.pkl", 100)
+equalizer("random_26-10_100ea.pkl", 325)
 
 # samples = pd.DataFrame(tuner)
 # samples.to_hdf("threshold.hdf", key="data")
