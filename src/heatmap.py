@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from random import uniform
+from preprocessor import Handwriting_Preprocessor
 
 def classify_chunk(chunk):
     """
@@ -12,6 +13,7 @@ def classify_chunk(chunk):
     returns
     -------
     [probability of class "handwriting"]
+    
     """
 
 
@@ -27,7 +29,8 @@ def preprocess(img):
         Scanned document that might or might not contain handwriting
 
     """
-    output = img
+    preproc = Handwriting_Preprocessor()
+    output = preproc.detect_handwriting(img)
     return output
 
 
@@ -88,10 +91,11 @@ def show(img):
     plt.show()
 
 
-img = cv2.imread('page0002.jpg')
+img = cv2.imread('../data/page0002.jpg')
+heatmap = generate_heatmap(img)
+
 print(img.shape)
 show(img)
-heatmap = generate_heatmap(img)
+
 print(heatmap.shape)
 show(heatmap)
-print(heatmap)
