@@ -212,13 +212,13 @@ def equalizer(date, HW, num_HW, noHW, num_noHW):
     group_size = num_noHW // 4
     sel_size = limit // 4
 
-    for it, page in enumerate(range(num_noHW)):
-        if len(objects) < group_size and jt != num_noHW:
+    for page in range(num_noHW):
+        if jt < group_size and jt != num_noHW:
             objects.extend(pkl.load(g))
             _ = pkl.load(g)
             jt += 1
 
-        if len(objects) == group_size:
+        if jt == group_size:
             print("Processing %s objects; selecting %s" %
                   (len(objects), sel_size))
             np_objs = np.array(objects).copy()
@@ -231,6 +231,7 @@ def equalizer(date, HW, num_HW, noHW, num_noHW):
             labels = np.append(labels, [0] * len(sel_noHW))
 
             # starting over
+            jt = 1
             objects = []
 
     if len(pixels) == len(labels) and np.abs(len(pixels) - 2 * limit) < 4:
