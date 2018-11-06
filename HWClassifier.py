@@ -5,13 +5,14 @@ import pickle
 from sklearn.model_selection import train_test_split
 import os
 
+DEFAULT_FILE_NAME = 'trained_hw_classifier'
 DEFAULT_IMAGE_SIZE = 150
 DEFAULT_IMAGE_CHANNELS = 3
 DEFAULT_FILTER_SIZE = 5
 DEFAULT_FILTER_NUM = 15
 DEFAULT_FC_LAYER_1_SIZE = 128
 DEFAULT_FC_LAYER_2_SIZE = 32
-DEFAULT_TRAINING_ITERATION_NUM = 1000
+DEFAULT_TRAINING_ITERATION_NUM = 2500
 DEFAULT_TRAINING_BATCH_SIZE = 30
 
 
@@ -25,7 +26,7 @@ def create_model(
 
     # input templates
     x = tf.placeholder(tf.float32, shape=[None, image_size, image_size, image_channels], name='x')
-    y_true = tf.placeholder(tf.float32, shape=[None, 1], name='x')
+    y_true = tf.placeholder(tf.float32, shape=[None, 1], name='y_true')
 
     conv_layer_1 = tf.layers.conv2d(x, filter_num, (filter_size,filter_size),
                                   padding='same', activation=tf.nn.relu, name="conv_layer_1")
@@ -41,7 +42,7 @@ def create_model(
                                    activation=tf.nn.relu, name='full_layer_1')
     full_layer_2 = tf.layers.dense(full_layer_1, fc_layer_2_size,
                                    activation=tf.nn.relu, name='full_layer_2')
-    y_pred = tf.layers.dense(full_layer_2, 1, activation=None)
+    y_pred = tf.layers.dense(full_layer_2, 1, activation=None, name='y_pred')
 
     # loss function for optimizer
     loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=y_pred, labels=y_true))
@@ -82,6 +83,7 @@ def create_training_data(image_shape=[DEFAULT_IMAGE_SIZE, DEFAULT_IMAGE_SIZE, DE
         y_test = [[x] for x in labels_test]
     session.close()
     return {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
+
 
 def train_cnn(session, model, training_data,
         training_iteration_num= DEFAULT_TRAINING_ITERATION_NUM,
@@ -135,6 +137,8 @@ def train_cnn(session, model, training_data,
             loss_vec_test.append(loss)
             accuracy_vec_test.append(accuracy)
             print('Test Data: loss = %0.5f, accuracy = %0.5f' % (loss, accuracy))
+            #save model
+            save_model(session, iteration=i)
 
     print('loss function training set:')
     print(loss_vec_train)
@@ -144,6 +148,16 @@ def train_cnn(session, model, training_data,
     print(loss_vec_test)
     print('accuracy test set:')
     print(accuracy_vec_test)
+
+
+def save_model(session, filename= DEFAULT_FILE_NAME, iteration=-1):
+    saver = tf.train.Saver()
+    cwd = os.getcwd()
+    path = os.path.join(cwd, "trained_cnns/" + filename)
+    if (iteration < 0):
+        saver.save(session, path)
+    else:
+        saver.save(session, path, global_step=iteration)
 
 
 def main():
@@ -162,31 +176,28 @@ def main():
     #print('training data created and saved')
 
     # convert Ariel's data set
-    #with open('training_data/equalSamp_26-10_538.pkl', 'rb') as f:
+    #with open('training_data/equalSamp_26-10_1795.pkl', 'rb') as f:
     #    files = pickle.load(f)
     #    labels = pickle.load(f)
     #    labels = [[label] for label in labels]
     #x_train, x_test, y_train, y_test = train_test_split(files, labels, test_size=0.30, random_state=42)
     #training_data = {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
-    #with open('training_data/data_set_ariel_equal.pkl', 'wb+') as f:
+    #with open('training_data/data_set_ariel_equal_2.pkl', 'wb+') as f:
     #    pickle.dump(training_data, f, pickle.HIGHEST_PROTOCOL)
     #print('training data saved')
 
     # load training data from from pickle file
-    with open('training_data/data_set_ariel_equal.pkl', 'rb') as f:
+    with open('training_data/data_set_ariel_equal_2.pkl', 'rb') as f:
         training_data = pickle.load(f)
     print('training data loaded')
 
     # train cnn
     train_cnn(session, model, training_data)
+    print('cnn trained')
 
-    # save trained model
-    # cwd = os.getcwd()
-    # path = os.path.join(cwd, 'test')
-    # tf.saved_model.simple_save(session, path,
-    #            inputs={'x': model['x'], 'y_true': model['y_true']},
-    #            outputs={'y_pred': model['y_pred']})
-    #print('model saved')
+    # save cnn
+    save_model(session)
+    print('cnn saved')
 
 
 if __name__ == '__main__':
