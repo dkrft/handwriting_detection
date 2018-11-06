@@ -7,8 +7,11 @@ def classify_chunk(chunk):
     """
     parameter
     ---------
-    chunk : uint8 numpy.ndarray of shape (150, 150) or (150, 150, 3)
+    chunk : uint8 numpy.ndarray of shape (150, 150, 3)
 
+    returns
+    -------
+    [probability of class "handwriting"]
     """
 
 
