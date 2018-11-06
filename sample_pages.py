@@ -1,257 +1,337 @@
-"""Use to sample pages for CNN input"""
 import cv2
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import re
 # import IPython
-from collections import defaultdict
-import pickle
+# from collections import defaultdict
+import pickle as pkl
+import multiprocessing as mp
+import argparse
+import os
 
-tuner = defaultdict(list)
-save_dir = "../data/samples/"
 
+def random_crops(args, pid, img, masks=""):
+    """
+    Create S random selections of a page with a fixed box size
 
-def sampler(hdf):
-    f = open("random_26-10_100ea_2.pkl", "wb")
+    Parameters
+    ----------
+    args: argparser object specified in terminal command
+    pid: pageid for saving out img (if specified in args)
+    img: imread object of img (df["path"])
+    masks: array with imread object of masks (df["mask"])
 
-    def random_crops(pid, img, masks="", samples=250, box=150, side=20,
-                     keep_mach_sigs=0, save=0):
-        """
-        Create x random selections of a page with a fixed box size
+    Returns
+    ----------
+    pid: page id given in function arguments
+    pmap_noHW: array appended to with pixel maps without a handwritten element
+    pmap_HW: array appended to with pixel maps with a handwritten element
 
-        Parameters
-        ----------
-        dims : dimensions of the image being considered
+    and if specified, saved cropped version of img
+    """
 
-        img: imread object of img (df["path"])
+    # creating empty lists to store pixel maps
+    pmap_noHW = []
+    pmap_HW = []
 
-        masks: array with imread object of masks (df["mask"])
+    it = 0
+    h, w = img.shape[:2]
+    # sample page; use while loop as some types of elements may be rejected
+    while it < args.samples[0]:
+        # - bottom left pixel of box -
+        rand_h = np.random.randint(0, h - args.box)
+        rand_w = np.random.randint(0, w - args.box)
 
-        samples : number of times to sample from a page;
-                 should depend some on page size, no?
+        crop_img = img[rand_h:rand_h + args.box, rand_w:rand_w + args.box]
 
-        box: integer pixels for height and width of box; assumed square
+        # has no mask or hw element
+        if isinstance(masks, str):
+            if args.save_samp:
+                cv2.imwrite(args.save_dir + "no_mask/%s_%i.png" %
+                            (pid, it), crop_img)
+            pmap_noHW.append(crop_img)
+            it += 1
 
-        side: integer pixel border subtracted from box to ensure mask element
-              contained (not edge pixels); fully substracted from each side of dim
+        # page has mask(s)
+        else:
+            # TO DO| consider changes to cropped mask (e.g. variance);
+            # code does not distinguish between mark/text/etc. mixed cases
+            # based on first mask found in area meeting criteria
+            hasMask = False
+            for hwType, in_mask in masks.items():
+                # inset of mask box to ensure HW element (label not on edge)
+                sub_mask = np.array(in_mask[rand_h + args.side:rand_h + args.box - args.side,
+                                            rand_w + args.side:rand_w + args.box - args.side])
 
-        Returns
-        ----------
-        saved cropped version of img
+                # checks to see if mask present in cropped area:
+                # use no. white (black in cv2) pixels > 0 to distinguish
+                if sum(sub_mask.flatten() == 255) > 0:
+                    # to check on masking (but not in parallel processes)
+                    # crop_mask = np.array(in_mask[rand_h:rand_h + args.box,
+                    #                              rand_w:rand_w + args.box])
+                    # mask_img = cv2.bitwise_and(crop_img, crop_img,
+                    #                            mask=crop_mask)
+                    # plt.imshow(mask_img)
+                    # plt.show()
 
-        """
-        pixel_maps = []
-        labels = []
-
-        h, w = img.shape[:2]
-        it = 0
-        while it < samples:
-            # - bottom left pixel of box -
-            rand_h = np.random.randint(0, h - box)
-            rand_w = np.random.randint(0, w - box)
-
-            crop_img = img[rand_h:rand_h + box, rand_w:rand_w + box]
-
-            # has no mask or hw element
-            if isinstance(masks, str):
-                if save:
-                    cv2.imwrite(save_dir + "no_mask/%s_%i.png" %
-                                (pid, it), crop_img)
-                pixel_maps.append(crop_img)
-                labels.append(0)
-                it += 1
-
-            # page has mask(s)
-            else:
-                # TO DO apply cropped mask and variance threshold (NEED TO STUDY)
-                # or keep within center of box with side modifications
-                # TO TUNE FURTHER
-
-                # this implementation would allow HW element near a machine element
-                # does not distinguish between mark/text mixed cases
-                for hwType, in_mask in masks.items():
-                    crop_mask = np.array(in_mask[rand_h:rand_h + box,
-                                                 rand_w:rand_w + box])
-
-                    whites = sum(crop_mask.flatten() == 255)
-
-                    # has indent to ensure HW element (label not on edge)
-                    sub_mask = np.array(in_mask[rand_h + side:rand_h + box - side,
-                                                rand_w + side:rand_w + box - side])
-
-                    sub_whites = sum(sub_mask.flatten() == 255)
-
-                    if sub_whites > 0:
-                        # to check on masking
-                        # mask_img = cv2.bitwise_and(crop_img, crop_img,
-                        #                            mask=crop_mask)
-                        # plt.imshow(mask_img)
-                        # plt.show()
-
-                        if hwType == "mach_sig":
-
-                            if keep_mach_sigs:
-                                if save:
-                                    cv2.imwrite(save_dir + "mask/%s/%s_%i.png" %
-                                                (hwType, pid, it), crop_img)
-                                pixel_maps.append(crop_img)
-                                labels.append(0)
-                                it += 1
-                                break
-
-                            # don't want to save these; don't count this sample
-                            else:
-                                # continue as may have other masks it works with
-                                continue
-
-                        # assumed either text or mark; save out & new sample
-                        else:
-                            save_path = save_dir + "mask/%s/%s_%i.png" % \
-                                (hwType, pid, it)
-
-                            if save:
-                                cv2.imwrite(save_path, crop_img)
-                            pixel_maps.append(crop_img)
-                            labels.append(1)
-
-                            # tuner["hwType"].append(hwType)
-                            # tuner["whites_sub_mask"].append(sub_whites)
-                            # tuner["whites_mask"].append(whites)
-                            # # tuner["nonblacks_mask_img"].append()
-
-                            # # excludes mask
-                            # mean, stdDev = cv2.meanStdDev(crop_img, mask=crop_mask)
-                            # tuner["mean_r"].append(mean[0][0])
-                            # tuner["mean_g"].append(mean[1][0])
-                            # tuner["mean_b"].append(mean[2][0])
-
-                            # tuner["std_r"].append(stdDev[0][0])
-                            # tuner["std_g"].append(stdDev[1][0])
-                            # tuner["std_b"].append(stdDev[2][0])
-
-                            # # includes mask elements
-                            # mean2, stdDev2 = cv2.meanStdDev(crop_img)
-
-                            # tuner["mean_r_bkg"].append(mean2[0][0])
-                            # tuner["mean_g_bkg"].append(mean2[1][0])
-                            # tuner["mean_b_bkg"].append(mean2[2][0])
-
-                            # tuner["std_r_bkg"].append(stdDev2[0][0])
-                            # tuner["std_g_bkg"].append(stdDev2[1][0])
-                            # tuner["std_b_bkg"].append(stdDev2[2][0])
-
-                            # tuner["path"].append(save_path)
-
-                            # tuner["pen"].append(input('mark y / n?'))
-                            # tuner["char"].append(input('char(s) y / n?'))
-                            # tuner["edge"].append(input('on edge y / n?'))
-
+                    # sometimes we don't want to keep machine signatures
+                    # TO DO| If keep machSig, need to check that HW elems never overlap
+                    # or need to more robustly code
+                    if hwType == "mach_sig":
+                        if args.machSig:
+                            if args.save_samp:
+                                cv2.imwrite(args.save_dir + "mask/%s/%s_%i.png" %
+                                            (hwType, pid, it), crop_img)
+                            hasMask = True
+                            pmap_noHW.append(crop_img)
                             it += 1
-                            # found a matching mask; no need to consider others
                             break
 
-                    # had mask but not included in crop
+                        # don't want to save these; don't count this sample
+                        else:
+                            # continue as may have other masks it works with
+                            continue
+                    # assumed either text or mark; save out & new sample
                     else:
-                        if save:
-                            cv2.imwrite(save_dir + "mask/not_in_samp/%s_%i.png" %
-                                        (pid, it), crop_img)
+                        if args.save_samp:
+                            save_path = args.save_dir + "mask/%s/%s_%i.png" % \
+                                (hwType, pid, it)
+                            cv2.imwrite(save_path, crop_img)
 
-                        pixel_maps.append(crop_img)
-                        labels.append(0)
-
+                        pmap_HW.append(crop_img)
+                        hasMask = True
                         it += 1
+                        # found a matching mask; no need to consider others
+                        break
 
-        pickle.dump(pixel_maps, f)
-        pickle.dump(labels, f)
-        pickle.dump(pid, f)
+            # had mask but not included in crop
+            if not hasMask:
+                if args.save_samp:
+                    cv2.imwrite(args.save_dir + "mask/not_in_samp/%s_%i.png" %
+                                (pid, it), crop_img)
 
-    data = pd.read_hdf(hdf)
+                pmap_noHW.append(crop_img)
+                it += 1
 
-    # reducing data to first element to only load img/mask once
-    sel = data.groupby(["pageid", "hwType"], as_index=False).first()
+    return pid, pmap_noHW, pmap_HW
 
-    count = 0
-    for name, group in sel.groupby(["pageid", "path"], as_index=False):
-        count += 1
 
-        # if more than one mask, path will be duplicated
-        path = group["path"].unique()[0]
+def mp_sampler(zipped):
+    """
+    Prepare for S samplings by loading img/masks & rescaling to pass onto
+    random_crops()
 
-        # creating unique name to save cropped image out to
-        pageid = (re.sub("img/", "", path).split(".jpg")[0]).split("/")[2:4]
-        pageid = "_".join(pageid)
+    Parameters
+    ----------
+    zipped: zip object of grouped df and argparser object
 
-        # 0 import in image and mask
-        img = cv2.imread(path)
-        h, w = img.shape[:2]
+    """
 
-        scale_me = 1.
-        if h < 2337 and w < 2337:
-            if h > w:
-                scale_me = 2337 / h
-            else:
-                scale_me = 2337 / w
-        img = cv2.resize(img, (0, 0), fx=scale_me, fy=scale_me)
+    # parsing zipped input
+    grouped, args = zipped
+    _, group = grouped
 
-        # means that no masks are present; hasHW = 0
-        if "" in group["mask"].unique():
-            random_crops(pageid, img)
-        # has mask(s)
+    # if more than one mask, path will be duplicated
+    path = group["path"].unique()[0]
+
+    # variable for if saving out random cropped images
+    base = (os.path.normpath(path)).split(os.sep)[2]
+    page_base = os.path.splitext(os.path.basename(path))[0]
+    pageid = "%s_%s" % (base, page_base)
+
+    # 0 import in image and masks
+    img = cv2.imread(path)
+    h, w = img.shape[:2]
+
+    # 0.a rescale images in way to preserve aspect ratio
+    # and help with a more uniform sampling process
+    scale_me = 1.
+    if h < 2337 and w < 2337:
+        if h > w:
+            scale_me = 2337 / h
         else:
-            masks = {}
-            # need to iterate over for cropper
-            for index, el in group.iterrows():
-                # comes in inverted from saved png
-                mask = cv2.imread(el["mask"], 0)
-                mask = cv2.resize(mask, (0, 0), fx=scale_me, fy=scale_me)
-                masks[el["hwType"]] = mask
-            random_crops(pageid, img, masks)
+            scale_me = 2337 / w
+    img = cv2.resize(img, (0, 0), fx=scale_me, fy=scale_me)
+    h, w = img.shape[:2]
 
-        print(count)
+    # TO DO| if save samp, create all sub-directories here so just called once
+
+    # 1.a no masks are present; hasHW = 0
+    if "" in group["mask"].unique():
+        tup = random_crops(args, pageid, img, masks="")
+    # 1.b has mask(s)
+    else:
+        masks = {}
+        # 2.a need to load each mask for cropping classification
+        for index, el in group.iterrows():
+            # comes in inverted from saved png
+            mask = cv2.imread(el["mask"], 0)
+            mask = cv2.resize(mask, (0, 0), fx=scale_me, fy=scale_me)
+            masks[el["hwType"]] = mask
+        tup = random_crops(args, pageid, img, masks)
+
+    return tup
 
 
-def equalizer(pkl, n):
-    f = open(pkl, "rb")
+def equalizer(date, HW, num_HW, noHW, num_noHW):
+    """
+    Equally select HW and noHW elements using num_HW
+    as sample size for each population
+
+    Parameters
+    ----------
+    HW: name of pickled file with HW elements
+    num_HW: # of added HW elements
+    noHW: name of pickled file with noHW elements
+    num_noHW: # of added noHW elements
+
+    Returns
+    ----------
+    equalSamp*.pkl: pickled file with equal selection from random*.pkl
+                    of cropped images with or without handwritten text;
+                    need to randomly select from/shuffle as ordered data
+
+    """
     pixels = []
-    labels = []
-    for it in range(n):
-        pixels.extend(pickle.load(f))
-        labels.extend(pickle.load(f))
+    page = []
+    f = open(HW, "rb")
+    for it in range(num_HW):
+        pixels.extend(pkl.load(f))
+        page.extend(pkl.load(f))
 
+    # how many samples of HW and noHW we want
+    limit = len(pixels)
+    labels = [1] * len(pixels)
     pixels = np.array(pixels)
-    labels = np.array(labels)
 
-    hasHW_mask = labels == 1
-    hasHW = pixels[hasHW_mask]
-    hasHW_labs = labels[hasHW_mask]
+    # performing noHW selection in 5 groups with remainders ignored
+    jt = 1
+    objects = []
+    g = open(noHW, "rb")
+    group_size = num_noHW // 4
+    sel_size = limit // 4
 
-    noHW = pixels[~hasHW_mask]
-    noHW_labs = labels[~hasHW_mask]
+    for it, page in enumerate(range(num_noHW)):
+        if len(objects) < group_size and jt != num_noHW:
+            objects.extend(pkl.load(g))
+            _ = pkl.load(g)
+            jt += 1
 
-    rand_sel = np.random.randint(0, high=len(noHW) - 1, size=sum(hasHW_mask))
-    noHW_sel = noHW[rand_sel]
-    noHW_labs_sel = noHW_labs[rand_sel]
+        if len(objects) == group_size:
+            print("Processing %s objects; selecting %s" %
+                  (len(objects), sel_size))
+            np_objs = np.array(objects).copy()
+            rand_sel = np.random.randint(0, high=len(objects) - 1,
+                                         size=sel_size)
+            sel_noHW = np_objs[rand_sel]
 
-    data = np.append(hasHW, noHW_sel, axis=0)
-    labs = np.append(hasHW_labs, noHW_labs_sel, axis=0)
+            # appending to HW elems
+            pixels = np.append(pixels, sel_noHW, axis=0)
+            labels = np.append(labels, [0] * len(sel_noHW))
 
-    g = open("equalizer_26-10_%s.pkl" % sum(hasHW_mask), 'wb')
-    pickle.dump(data, g)
-    pickle.dump(labs, g)
+            # starting over
+            objects = []
+
+    if len(pixels) == len(labels) and np.abs(len(pixels) - 2 * limit) < 4:
+        print("Equalizer succeeded!")
+        h = open("equalSamp_%s_%s.pkl" % (date, limit), 'wb')
+        pkl.dump(pixels, h)
+        pkl.dump(labels, h)
+        h.close()
+    else:
+        print("ERROR in equalizer()")
+
+    f.close()
     g.close()
 
 
-sampler("labels/26-10.hdf")
+def main(args):
+    """
+    Execute the multiprocessing of mp_sampler() and equalizer()
 
-equalizer("random_26-10_100ea.pkl", 325)
+    Parameters
+    ----------
+    args: argparser object specified in terminal command
 
-# samples = pd.DataFrame(tuner)
-# samples.to_hdf("threshold.hdf", key="data")
+    Returns
+    ----------
+    random*.pkl:    pickled file with all the random samples;
+                    for ea. page, save list with all pixel maps & list
+                    with all labels
 
-# dimensions = pd.DataFrame(dims)
-# dimensions.to_hdf("page_dims.hdf", key="data")
+    equalSamp*.pkl: pickled file with equal selection from random*.pkl
+                    of cropped images with or without handwritten text;
+                    need to randomly select from/shuffle as ordered data
 
-# TO DO | 2D histogram of page dimensions
-# Would be nice to have companion HDF with original dimensions and data info...
-# not just blind pickle
+    """
+
+    # reading in HDF of all labeled elements
+    hdf_path = args.input[0]
+    data = pd.read_hdf(hdf_path)
+
+    # creating files to save out random selections
+    base = os.path.splitext(os.path.basename(hdf_path))[0]
+    HW_file = "random_%s_%sea_HW.pkl" % (base, args.samples[0])
+    noHW_file = "random_%s_%sea_noHW.pkl" % (base, args.samples[0])
+
+    f_HW = open(HW_file, "wb")
+    g_noHW = open(noHW_file, "wb")
+
+    # reducing data to first element to only load img/mask once
+    sel = data.groupby(["pageid", "hwType", "path"], as_index=False).first()
+    # then grouping by unique page identifiers
+    grouped = sel.groupby(["pageid", "path"], as_index=False)
+    # creating iterable version of args
+    items = [args] * len(grouped)
+
+    # save one local node for sanity
+    pool = mp.Pool(mp.cpu_count() - 1)
+    num_pages = 0
+    num_pagesHW = 0
+    for count, result in enumerate(pool.imap(mp_sampler, zip(grouped, items))):
+        pid, pmap_noHW, pmap_HW = result
+
+        if count % 10 == 0:
+            print("%s pages processed" % count)
+
+        if len(pmap_noHW) > 0:
+            pkl.dump(pmap_noHW, g_noHW)
+            pkl.dump(pid, g_noHW)
+            num_pages += 1
+
+        if len(pmap_HW) > 0:
+            pkl.dump(pmap_HW, f_HW)
+            pkl.dump(pid, f_HW)
+            num_pagesHW += 1
+
+    f_HW.close()
+    g_noHW.close()
+
+    # print(num_pagesHW, num_pages)
+    equalizer(base, HW_file, num_pagesHW, noHW_file, num_pages)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Sample pages for CNN use.')
+
+    parser.add_argument('samples', metavar='S', type=int, nargs=1,
+                        help='number of desired samples per page')
+    parser.add_argument('input', metavar='filename', type=str, nargs=1,
+                        help='name of full HDF (not hasHW)')
+
+    parser.add_argument('--box', dest='box', type=int,
+                        default=150, help="int n (150) for creating n x n pixel \
+                        box")
+    parser.add_argument('--side', dest='side', type=int, default=20,
+                        help='int s (20) for creating nested (n-s)x(n-s) box')
+    parser.add_argument('--keep_machSig', dest='machSig', type=bool,
+                        default=False, help="boolean to keep sampled image with machine \
+                        signature or not (False)")
+    parser.add_argument('--save_Samples', dest='save_samp', type=bool,
+                        default=False, help='bool to save sampled images (png) \
+                        or not (False)')
+    parser.add_argument('--save_SampDir', dest='save_dir', type=str,
+                        default="../data/samples/", help="directory to save random, \
+                        cropped images")
+    main(parser.parse_args())
