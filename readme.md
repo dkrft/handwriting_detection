@@ -17,7 +17,7 @@ python heatmap.py
 
 # Training Data
 
- the data to train the neural network can be found in our dropbox folder
+ the data to train the neural network can be found in our dropbox folder (not public (yet?))
 
 # TODO
 
