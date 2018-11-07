@@ -15,6 +15,10 @@ cd src
 python heatmap.py
 ```
 
+# Training Data
+
+ the data to train the neural network can be found in our dropbox folder
+
 # TODO
 
 create script, that:
@@ -22,4 +26,4 @@ create script, that:
 - Fills data/raw with the raw images
 filenames in such a way, that they are the same in labels and raw for each picture.
 
-so that I can optimize the preprocessor
+so that the whole package can be trained, optimized and such

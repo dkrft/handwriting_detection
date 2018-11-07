@@ -1,6 +1,9 @@
 # Our nice custom stuff hipster etsy individuell
 data/labels/*
 data/raw/*
+training_data/*
+venv/*
+.idea/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

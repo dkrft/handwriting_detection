@@ -7,6 +7,8 @@ from classifier import HWInterface
 
 predictor = HWInterface()
 
+print('predictor loaded.')
+
 def classify_chunk(chunk):
     """
     parameter
@@ -51,7 +53,7 @@ def generate_heatmap(img):
     img = preprocess(img)
 
     # divide img into chunks
-    stride = 20
+    stride = 100
     w = 150
     h = 150
 
