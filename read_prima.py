@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 import cv2
-import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
 import os
 from xml.etree import ElementTree
@@ -67,7 +67,8 @@ def make_maskHDF(filebase):
                 if child.tag == "Point" and HW:
                     holder[points].append([int(child.attrib["x"]),
                                            int(child.attrib["y"])])
-                    geo[points].append(child.attrib)
+                    geo[points].append({"x": int(child.attrib["x"]),
+                                        "y": int(child.attrib["y"])})
 
         # creating mask
         img = np.zeros((height, width, 3), np.uint8)
@@ -81,13 +82,19 @@ def make_maskHDF(filebase):
 
         maskpath = source_dir + "text_mask/%s.%s" % (filebase, "png")
         cv2.imwrite(maskpath, img)
-        return maskpath
+        return maskpath, geo
 
 prima = defaultdict(list)
 for file in os.listdir(source_dir + "img"):
     base = os.path.splitext(file)[0]
-    maskpath = make_maskHDF(base)
-    prima["mask"]
-    break
-    # make_maskHDF()
-    # source_dir + "img/" + file
+    maskpath, geo = make_maskHDF(base)
+    for key, g in geo.items():
+        prima["geometry"].append(g)
+        prima["hwType"].append("text")
+        prima["hasHW"].append(1)
+        prima["pageid"].append(file)
+        prima["path"].append(source_dir + "img/%s" % (file))
+        prima["mask"].append(maskpath)
+
+df = pd.DataFrame(prima)
+df.to_hdf("./labels/prima.hdf", key="data")
