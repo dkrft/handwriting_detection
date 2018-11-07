@@ -1,3 +1,7 @@
+# Our nice custom stuff hipster etsy individuell
+data/labels/*
+data/raw/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

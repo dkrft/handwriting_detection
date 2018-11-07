@@ -1,0 +1,2 @@
+model_checkpoint_path: "C:\\Users\\denni\\PycharmProjects\\CNN\\trained_cnns/trained_hw_classifier"
+all_model_checkpoint_paths: "C:\\Users\\denni\\PycharmProjects\\CNN\\trained_cnns/trained_hw_classifier"

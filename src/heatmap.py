@@ -3,6 +3,9 @@ import cv2
 from matplotlib import pyplot as plt
 from random import uniform
 from preprocessor import Handwriting_Preprocessor
+from classifier import HWInterface
+
+predictor = HWInterface()
 
 def classify_chunk(chunk):
     """
@@ -16,8 +19,7 @@ def classify_chunk(chunk):
     
     """
 
-
-    return [uniform(0, 1)]
+    return [predictor.predict([chunk])]
 
 
 def preprocess(img):
@@ -49,7 +51,7 @@ def generate_heatmap(img):
     img = preprocess(img)
 
     # divide img into chunks
-    stride = 10
+    stride = 20
     w = 150
     h = 150
 
@@ -76,8 +78,14 @@ def generate_heatmap(img):
             a = y_pos*stride
             b = x_pos*stride
             chunk = img[a:h+a, b:w+b]
-            heatmap[y_pos, x_pos] = classify_chunk(chunk)[0]
+            # [0] because it classifies multiple images
+            # another [0] because there is only one class
+            c = classify_chunk(chunk)[0][0]
+            heatmap[y_pos, x_pos] = c
             x_pos += 1
+
+        if y_pos%10 == 0:
+            print(y_pos+1, '/', hm_h, 'done')
 
         y_pos += 1
 
@@ -91,7 +99,7 @@ def show(img):
     plt.show()
 
 
-img = cv2.imread('../data/page0002.jpg')
+img = cv2.imread('../data/raw/page0002.jpg')
 heatmap = generate_heatmap(img)
 
 print(img.shape)
