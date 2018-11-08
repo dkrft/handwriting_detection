@@ -6,15 +6,15 @@ import math
 
 class HWInterface:
 
-    def __init__(self):
+    def __init__(self, model_index):
         # create session
         self.session = tf.Session()
 
         # load model
         cwd = os.getcwd()
-        path = os.path.join(cwd, 'trained_cnns/trained_hw_classifier.meta')
+        path = os.path.join(cwd, 'trained_model/hw_classifier-0.meta')
         saver = tf.train.import_meta_graph(path)
-        saver.restore(self.session, 'trained_cnns/trained_hw_classifier')
+        saver.restore(self.session, 'trained_model/hw_classifier-' + str(model_index))
 
 
         # get in and output tensors
@@ -28,12 +28,12 @@ class HWInterface:
 
 
 #if __name__ == '__main__':
-#    with open('training_data/data_set_ariel_equal.pkl', 'rb') as f:
+#    with open('training_data/ariel_26-10_2341.pkl', 'rb') as f:
 #        training_data = pickle.load(f)
-
+#
 #    # Interface Usage example
-#    interface = HWInterface()
-#    test_x =  training_data['x_train'][:30]
-#    test_y = training_data['y_train'][:30]
+#    interface = HWInterface(1000)
+#    test_x = training_data['x_test'][:30]
+#    test_y = training_data['y_test'][:30]
 #    print(test_y)
 #    print(interface.predict(test_x))
