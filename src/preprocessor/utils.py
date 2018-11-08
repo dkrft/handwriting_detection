@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from scipy import ndimage
 from sklearn.cluster import DBSCAN
+from matplotlib import pyplot as plt
 
 # rectangular density based clustering
 # uses cityblock distance and two epsilons
@@ -58,7 +59,7 @@ def rotate(img, angle=None):
     return rotated, angle
 
 
-def show(self, img):
+def show(img):
     plt.imshow(img)
     plt.xticks([])
     plt.yticks([])

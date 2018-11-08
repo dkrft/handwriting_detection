@@ -6,25 +6,24 @@ from scipy.spatial import distance
 from sys import maxsize
 from .utils import show, rdbscan
 
-
 class Handwriting_Preprocessor():
-    def __init__(self, bw_threshold = 200,
-                       density_threshold_2 = 248,
-                       density_threshold_1 = 0.3,
-                       filter_size_multiplicator_1 = 20,
-                       filter_size_multiplicator_2 = 10,
-                       vertical_filter_size_1 = 0.1,
-                       vertical_filter_size_2 = 1,
+    def __init__(self, bw_threshold = 127,
+                       density_threshold_2 = 254,
+                       density_threshold_1 = 0.15,
+                       filter_size_multiplicator_1 = 67,
+                       filter_size_multiplicator_2 = 62,
+                       vertical_filter_size_1 = 0.6,
+                       vertical_filter_size_2 = 0.1,
                        # hough:
-                       min_line_length = 50,
-                       max_line_gap = 10,
+                       min_line_length = 105,
+                       max_line_gap = 4,
                        long_line_factor = 3,
-                       epsilon_v_1 = 5,
-                       epsilon_h_1 = 0.2,
-                       epsilon_v_2 = 5,
+                       epsilon_v_1 = 145,
+                       epsilon_h_1 = 18,
+                       epsilon_v_2 = 6,
                        epsilon_h_2 = 0.2,
-                       min_samples_1 = 1,
-                       min_samples_2 = 3):
+                       min_samples_1 = 8,
+                       min_samples_2 = 1):
         self.bw_threshold = bw_threshold
         self.density_threshold_2 = density_threshold_2
         self.density_threshold_1 = density_threshold_1
@@ -215,7 +214,7 @@ class Handwriting_Preprocessor():
             return img
 
         if verbose:
-            show_lines(img, vertical_valid_lines, vertical_invalid_lines)
+            self.show_lines(img, vertical_valid_lines, vertical_invalid_lines)
 
 
         # 'DBSCAN' step 2 --------
@@ -251,7 +250,7 @@ class Handwriting_Preprocessor():
             return img
 
         if verbose:
-            show_lines(img, vertical_valid_lines, vertical_invalid_lines)
+            self.show_lines(img, vertical_valid_lines, vertical_invalid_lines)
 
 
         # ------ find density of vertical lines ------
