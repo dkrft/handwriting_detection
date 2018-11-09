@@ -112,3 +112,6 @@ venv.bak/
 
 # specific
 errors.txt
+trained_model_26-10/*
+trained_model_27-10/*
+trained_model_27-10_2/*

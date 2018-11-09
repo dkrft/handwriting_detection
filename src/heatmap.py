@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from random import uniform
 from preprocessor import Handwriting_Preprocessor
 from classifier import HWInterface
+import time
 
 
 def classify_chunk(chunk, predictor):
@@ -18,7 +19,7 @@ def classify_chunk(chunk, predictor):
     
     """
 
-    return [predictor.predict([chunk])]
+    return [predictor.predict(chunk)]
 
 
 def preprocess(img):
@@ -47,12 +48,15 @@ def generate_heatmap(img):
 
     """
 
-    # img = preprocess(img)
+    img = preprocess(img)
 
     # show(img)
 
     # divide img into chunks
-    stride = 10
+    stride = 50
+
+    # the network has 150x150
+    # input neurons
     w = 150
     h = 150
 
@@ -70,9 +74,9 @@ def generate_heatmap(img):
     # (no need to transpose, but it means just don't use img.shape on opencv params)
     heatmap = np.zeros((hm_h, hm_w))
 
-    predictor = HWInterface()
+    predictor = HWInterface(1000)
 
-    print('predictor loaded.')
+    print('CNN loaded')
 
     y_pos = 0
     while y_pos < hm_h:
@@ -82,17 +86,19 @@ def generate_heatmap(img):
 
             a = y_pos*stride
             b = x_pos*stride
+
             chunk = img[a:h+a, b:w+b]
-            # don't send white into the classifier
-            # to improve performance
-            c = 0
-            if chunk.min() < chunk.max() - 25:
-                # [0] because it classifies multiple images
-                # another [0] because there is only one class
-                c = classify_chunk(chunk, predictor)[0][0]
-                # show(chunk)
-            heatmap[y_pos, x_pos] = c
-            
+
+            # skip everything that has too few dark pixels
+            # if (chunk < chunk.mean()).astype(int).sum() / (150*150) > 0.015:
+            # if chunk.min() < (chunk.max() - 150):
+            if (255 - chunk).sum() > 255 * 500:
+
+                c = classify_chunk([chunk], predictor)
+                # c[0] because there is only one class
+                # c[0][0] because there is only one chunk per classification
+                heatmap[y_pos, x_pos] = c[0][0]
+
             x_pos += 1
 
         # show 10% steps:
@@ -101,7 +107,41 @@ def generate_heatmap(img):
 
         y_pos += 1
 
+    heatmap = postprocess(heatmap)
+    heatmap = postprocess(heatmap)
+
     return heatmap
+
+
+def postprocess(heatmap):
+    """Removes noise"""
+    
+    heatmap_noise_removed = heatmap.copy()
+
+    for x in range(1, heatmap.shape[1]-1):
+        for y in range(1, heatmap.shape[0]-1):
+            
+            # the 7 surrounding pixels including itself
+            # need to exceed a sum of 4, otherwise it's
+            # considered noise.
+            val = 0
+
+            val += heatmap[y-1, x-1]
+            val += heatmap[y-1, x-0]
+            val += heatmap[y-1, x+1]
+
+            val += heatmap[y-0, x-1]
+            val += heatmap[y-0, x-0] # that's the center
+            val += heatmap[y-0, x+1]
+
+            val += heatmap[y+1, x-1]
+            val += heatmap[y+1, x-0]
+            val += heatmap[y+1, x+1]
+
+            if val < 5:
+                heatmap_noise_removed[y, x] = 0
+                
+    return heatmap_noise_removed
 
 
 def show(img):
@@ -111,8 +151,12 @@ def show(img):
     plt.show()
 
 
-img = cv2.imread('../data/raw/page0002.jpg')
+img = cv2.imread('../data/raw/page0001.jpg')
+
+start = time.time()
 heatmap = generate_heatmap(img)
+end = time.time()
+print(round(end - start, 3), 'Seconds')
 
 print(img.shape)
 show(img)
