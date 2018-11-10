@@ -247,6 +247,45 @@ def equalizer(date, HW, num_HW, noHW, num_noHW):
     g.close()
 
 
+def padder(args, equalfilepath):
+    """
+    Add padding of various widths to equalized sample
+
+    Parameters
+    ----------
+    args: argparser object specified in terminal command
+    equalfilepath: path to equalized sample
+
+    Returns
+    ----------
+    paddedSamp*_pxxx.pkl: pickled file with equal selection from equalSamp*.pkl
+                    of cropped images with specified padding,
+                    with or without handwritten text;
+                    need to randomly select from/shuffle as ordered data
+    """
+
+    start, mid1, mid2, end = equalfilepath.split("_")[1:5]
+    f = open(equalfilepath, 'rb')
+    pixels = pkl.load(f)
+    labels = pkl.load(f)
+    f.close()
+
+    WHITE = [255, 255, 255]
+    padding = [10, 30, 60, 100]
+    for p in padding:
+        new_pixels = [0] * len(labels)
+        save_to = "%s_%s_%s_p%s_%s" % (start, mid1, mid2, p, end)
+
+        for it, img in enumerate(pixels):
+            new_pixels[it] = cv2.copyMakeBorder(img, p, p, p, p,
+                                                cv2.BORDER_CONSTANT,
+                                                value=WHITE)
+        g = open(save_to, "wb")
+        pkl.dump(new_pixels, g)
+        pkl.dump(labels, g)
+        g.close()
+
+
 def main(args):
     """
     Execute the multiprocessing of mp_sampler() and equalizer()
@@ -335,4 +374,5 @@ if __name__ == '__main__':
     parser.add_argument('--save_SampDir', dest='save_dir', type=str,
                         default="../data/samples/", help="directory to save random, \
                         cropped images")
-    main(parser.parse_args())
+    padder(parser.parse_args, "equalSamp_26-10_s250_b150_5959.pkl")
+    # main(parser.parse_args())
