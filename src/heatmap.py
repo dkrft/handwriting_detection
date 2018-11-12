@@ -151,7 +151,7 @@ def show(img):
     plt.show()
 
 
-img = cv2.imread('../data/raw/page0001.jpg')
+img = cv2.imread('../training_data/test_2.jpg')
 
 start = time.time()
 heatmap = generate_heatmap(img)
