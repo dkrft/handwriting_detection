@@ -35,7 +35,7 @@ def classify_chunk(chunk, predictor):
 #    return output
 
 
-def random_heatmap(img, sample_size= 150, skip_param= 1500, heat_map_scale= 15):
+def random_heatmap(img, sample_size= 150, skip_param= 500, heat_map_scale= 15):
     # create heatmap
     height = img.shape[0]
     width = img.shape[1]
@@ -47,6 +47,9 @@ def random_heatmap(img, sample_size= 150, skip_param= 1500, heat_map_scale= 15):
 
     # draw random sample coordinates without replacement
     coordinates = np.random.choice(height * width, (height * width) // skip_param, replace=False)
+
+    # draw grid samples
+    #coordinates = [i for i in range(0,height * width,skip_param)]
 
     # load cnn
     cnn = HWInterface.HWInterface(1000)
@@ -227,7 +230,7 @@ def show(img):
 
 
 def main():
-    img = cv2.imread('training_data/test_2.jpg')
+    img = cv2.imread('training_data/hw/012.jpg')
 
     start = time.time()
     heatmap = random_heatmap(img)
