@@ -1,8 +1,4 @@
-# Our nice custom stuff hipster etsy individuell
-data/labels/*
-data/raw/*
 training_data/*
-venv/*
 .idea/*
 
 # Byte-compiled / optimized / DLL files
@@ -45,6 +41,7 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
 .cache
@@ -79,6 +76,10 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# IPython
+profile_default/
+ipython_config.py
+
 # pyenv
 .python-version
 
@@ -109,9 +110,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+.dmypy.json
+dmypy.json
 
-# specific
-errors.txt
-trained_model_26-10/*
-trained_model_27-10/*
-trained_model_27-10_2/*
+# Pyre type checker
+.pyre/
