@@ -10,11 +10,13 @@ DEFAULT_IMAGE_SIZE = 150
 DEFAULT_IMAGE_CHANNELS = 3
 DEFAULT_FILTER_SIZE = 5
 DEFAULT_FILTER_NUM = 15
-DEFAULT_FC_LAYER_1_SIZE = 100
+DEFAULT_FC_LAYER_1_SIZE = 225
 DEFAULT_FC_LAYER_2_SIZE = 25
+DEFAULT_OUTPUT_SIZE = 1
 DEFAULT_TRAINING_ITERATION_NUM = 7500
 DEFAULT_TRAINING_BATCH_SIZE = 100
 DEFAULT_SAVE_INTERVAL = 100
+DEFAULT_POS_WEIGHT = 1
 
 
 def create_model(
@@ -23,7 +25,9 @@ def create_model(
         filter_size= DEFAULT_FILTER_SIZE,
         filter_num= DEFAULT_FILTER_NUM,
         fc_layer_1_size = DEFAULT_FC_LAYER_1_SIZE,
-        fc_layer_2_size = DEFAULT_FC_LAYER_2_SIZE):
+        fc_layer_2_size = DEFAULT_FC_LAYER_2_SIZE,
+        output_size= DEFAULT_OUTPUT_SIZE,
+        pos_weight= DEFAULT_POS_WEIGHT):
 
     # input templates
     x = tf.placeholder(tf.float32, shape=[None, image_size, image_size, image_channels], name='x')
@@ -48,10 +52,12 @@ def create_model(
     full_layer_2 = tf.layers.dense(drop_out_layer_3, fc_layer_2_size,
                                    activation=tf.nn.relu, name='full_layer_2')
 
-    y_pred = tf.layers.dense(full_layer_2, 1, activation=None, name='y_pred')
+    y_pred = tf.layers.dense(full_layer_2, output_size, activation=None, name='y_pred')
 
     # loss function for optimizer
-    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=y_pred, labels=y_true))
+    loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(logits=y_pred,
+                                                                   targets=y_true,
+                                                                   pos_weight= pos_weight))
     optimizer = tf.train.AdamOptimizer().minimize(loss)
 
     # accuracy function
@@ -59,6 +65,15 @@ def create_model(
     accuracy = tf.reduce_mean(tf.cast(tf.equal(predictions, y_true), np.float32))
 
     return {'x': x, 'y_true': y_true, 'y_pred': y_pred, 'optimizer': optimizer, 'loss': loss, 'accuracy': accuracy}
+
+
+def compute_pos_weight(labels):
+    pos_count = 0
+    total_count = 0
+    for label in labels:
+        pos_count += sum(label)
+        total_count += len(label)
+    return (1.0 * total_count) / (1.0 * pos_count)
 
 
 def train_cnn(session, model, training_data,
