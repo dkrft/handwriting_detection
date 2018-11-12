@@ -156,50 +156,53 @@ def stride_heatmap(img, preprocess=False):
 
         y_pos += 1
 
-    # two noise removal passes
-    heatmap = postprocess(heatmap)
-    heatmap = postprocess(heatmap)
+    heatmap = surroundings_noise_remover(heatmap)
 
     return heatmap
 
 
-def postprocess(heatmap):
+def surroundings_noise_remover(heatmap, passes=2):
     """Removes noise"""
+    
+    for _ in range(passes):
 
-    heatmap_noise_removed = heatmap.copy()
+        heatmap_noise_removed = heatmap.copy()
 
-    for x in range(0, heatmap.shape[1]):
-        for y in range(0, heatmap.shape[0]):
+        for x in range(0, heatmap.shape[1]):
+            for y in range(0, heatmap.shape[0]):
 
-            # the 7 surrounding pixels including itself
-            # need to exceed a sum of 4, otherwise it's
-            # considered noise.
-            val = []
+                # the 7 surrounding pixels including itself
+                # need to exceed a sum of 4, otherwise it's
+                # considered noise.
+                val = []
 
-            if x > 0:
-                val += [heatmap[y    , x - 1]]
+                if x > 0:
+                    val += [heatmap[y    , x - 1]]
+                    if y > 0:
+                        val += [heatmap[y - 1, x - 1]]
+                    if y < heatmap.shape[0] - 1:
+                        val += [heatmap[y + 1, x - 1]]
+
+                if x < heatmap.shape[1] - 1:
+                    val += [heatmap[y    , x + 1]]
+                    if y > 0:
+                        val += [heatmap[y - 1, x + 1]]
+                    if y < heatmap.shape[0] - 1:
+                        val += [heatmap[y + 1, x + 1]]
+
                 if y > 0:
-                    val += [heatmap[y - 1, x - 1]]
+                    val += [heatmap[y - 1, x    ]]
                 if y < heatmap.shape[0] - 1:
-                    val += [heatmap[y + 1, x - 1]]
+                    val += [heatmap[y + 1, x    ]]
 
-            if x < heatmap.shape[1] - 1:
-                val += [heatmap[y    , x + 1]]
-                if y > 0:
-                    val += [heatmap[y - 1, x + 1]]
-                if y < heatmap.shape[0] - 1:
-                    val += [heatmap[y + 1, x + 1]]
+                # that's the center:
+                val += [heatmap[y    , x    ]]
 
-            if y > 0:
-                val += [heatmap[y - 1, x    ]]
-            if y < heatmap.shape[0] - 1:
-                val += [heatmap[y + 1, x    ]]
+                if sum(val)/len(val) < 5/len(val):
+                    heatmap_noise_removed[y, x] = 0
 
-            # that's the center:
-            val += [heatmap[y    , x    ]]
-
-            if sum(val)/len(val) < 5/len(val):
-                heatmap_noise_removed[y, x] = 0
+        # for the next pass
+        heatmap = heatmap_noise_removed
 
     return heatmap_noise_removed
 
