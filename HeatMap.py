@@ -237,12 +237,8 @@ def main():
     end = time.time()
     print(round(end - start, 3), 'Seconds')
 
-    print(img.shape)
-    show(img)
-
-    print(heatmap.shape)
-    show(heatmap)
-
+    h, w, _ = img.shape
+    show((cv2.resize(heatmap, (w, h), interpolation=cv2.INTER_NEAREST)/2+0.5) * img.mean(axis=2))
 
 if __name__ == '__main__':
     main()
