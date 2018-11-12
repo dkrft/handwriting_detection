@@ -35,11 +35,11 @@ def classify_chunk(chunk, predictor):
 #    return output
 
 
-def random_heatmap(img, sample_size= 150, skip_param= 1000):
+def random_heatmap(img, sample_size= 150, skip_param= 1500, heat_map_scale= 15):
     # create heatmap
     height = img.shape[0]
     width = img.shape[1]
-    heatmap = np.zeros((height, width))
+    heatmap = np.zeros((height // heat_map_scale, width // heat_map_scale))
 
     # padd image
     border = sample_size // 2
@@ -71,14 +71,14 @@ def random_heatmap(img, sample_size= 150, skip_param= 1000):
     # make nearest neighbour predictions
     progress = 0
     i = 0
-    for x in range(width):
-        for y in range(height):
-            if i % ((width * height) // 10) == 0:
+    for x in range(width // heat_map_scale):
+        for y in range(height // heat_map_scale):
+            if i % (((width // heat_map_scale) * (height // heat_map_scale)) // 10) == 0:
                 print("{}% of heatmap complete".format(progress))
                 progress += 10
             i += 1
 
-            _, neighbour_indices = kdtree.query([(y,x)], k=12)
+            _, neighbour_indices = kdtree.query([(y * heat_map_scale, x * heat_map_scale)], k=12)
             neighbours = [kdtree.data[i] for i in neighbour_indices[0]]
             neighbour_values = [predictions[(neighbour[0], neighbour[1])] for neighbour in neighbours]
             neighbour_values.sort()
