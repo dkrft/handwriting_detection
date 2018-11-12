@@ -31,8 +31,8 @@ def random_crop(args, pid, img, mask=[]):
     """
 
     # creating empty lists to store pixel maps
-    # pmap_noHW = []
-    # pmap_HW = []
+    imgs = []
+    labs = []
 
     it = 0
     h, w = img.shape[:2]
@@ -46,9 +46,12 @@ def random_crop(args, pid, img, mask=[]):
         # find pixels where HW mask is
         y, x = np.where(mask == 255)
 
-        sample = True
-        count = 0
-        while sample:
+        indices = np.linspace(0, args.box - args.hwbox,
+                              (args.box - args.hwbox) / args.hwbox + 1).astype(int)
+
+        sample = 0
+        max_samples = int(150. * (len(x) * 1. / (h * w)))
+        while sample < max_samples:
 
             # 1. select box
             # - sub-section of page with border size of box -
@@ -58,7 +61,7 @@ def random_crop(args, pid, img, mask=[]):
             # - from random pixel, create box with 1/4 directions
             rand_hs = (rand_h, rand_h + np.random.choice([-1, 1]) * args.box)
             rand_ws = (rand_w, rand_w + np.random.choice([-1, 1]) * args.box)
-
+            area = args.box ** 2
             # make sure bounding box is within page
             if min(rand_hs) >= 0 and max(rand_hs) <= h and \
                     min(rand_ws) >= 0 and max(rand_ws) <= w:
@@ -66,26 +69,30 @@ def random_crop(args, pid, img, mask=[]):
                 # - crop mask -
                 crop_mask = mask[min(rand_hs):max(rand_hs),
                                  min(rand_ws):max(rand_ws)]
-                # crop_mask = mask[min(rand_hs) + args.side:max(rand_hs) - args.side,
-                # min(rand_ws) + args.side:max(rand_ws) - args.side]
 
-                ret, thresh = cv2.threshold(crop_mask, 175, 255,
-                                            cv2.THRESH_BINARY)
-                contours = cv2.findContours(thresh, 1, 2)
-                print(contours)
-                # cnt = contours[0]
-                # area = cv2.contourArea(cnt)
-                # print(area)
+                sub_area = np.sum(crop_mask.flatten() == 255)
 
-                plt.imshow(crop_mask)
-                plt.show()
+                if (sub_area * 1. / area) > 0.12:
 
-                plt.imshow(thresh)
-                plt.show()
+                    crop_img = img[min(rand_hs):max(rand_hs),
+                                   min(rand_ws):max(rand_ws)]
+                    imgs.append(crop_img)
 
-                sample = False
+                    labels = []
+                    for ys in indices:
+                        for xs in indices:
+                            sub_mask = crop_mask[ys:ys + args.hwbox,
+                                                 xs:xs + args.hwbox]
+                            sub = np.sum(sub_mask.flatten() == 255)
 
-            # count += 1
+                            if sub * 1. / (args.hwbox**2) > 0.12:
+                                labels.append(1)
+                            else:
+                                labels.append(0)
+                    labs.append(labels)
+
+                    sample += 1
+    return imgs, labs
 
 
 def mp_sampler(zipped):
@@ -154,10 +161,9 @@ def mp_sampler(zipped):
 
         # scale mask to be same size of image
         or_mask = cv2.resize(or_mask, (0, 0), fx=scale_me, fy=scale_me)
-        # tup =
-        random_crop(args, pageid, img, np.array(or_mask))
+        tup = random_crop(args, pageid, img, np.array(or_mask))
 
-    # return tup
+    return tup
 
 
 def main(args):
@@ -186,9 +192,22 @@ def main(args):
     # creating iterable version of args
     hasHWitems = [args] * len(hasHW_group)
 
+    samples = []
+    samp_labs = []
+    samps = 0
     # 1. sample/ select all HW elements
     for s in zip(hasHW_group, hasHWitems):
-        mp_sampler(s)
+        imgs, labs = mp_sampler(s)
+        samps += len(imgs)
+        if len(imgs) > 0:
+            samples.extend(imgs)
+            samp_labs.extend(labs)
+    f = open("pixel_maps_%i.pkl" % samps, "wb")
+    pkl.dump(samples, f)
+    pkl.dump(samp_labs, f)
+    f.close()
+    # print(samps, len(samples))
+
     # for name, group in grouped:
     # print(name)
 
@@ -211,7 +230,7 @@ if __name__ == '__main__':
     parser.add_argument('--box', dest='box', type=int,
                         default=150, help="int n (150) for creating n x n pixel \
                         box")
-    parser.add_argument('--hwbox', dest='box', type=int,
+    parser.add_argument('--hwbox', dest='hwbox', type=int,
                         default=15, help="int n (15) for creating n x n pixel \
                         box for labeling if HW or not; must be int factor of box")
     parser.add_argument('--side', dest='side', type=int, default=20,
