@@ -9,7 +9,9 @@ import pickle as pkl
 import multiprocessing as mp
 import argparse
 import os
-import collections
+from collections import Counter
+import operator
+import scipy.ndimage as ndimage
 
 
 def random_crop(args, pid, img, mask=[]):
@@ -33,9 +35,19 @@ def random_crop(args, pid, img, mask=[]):
     # creating empty lists to store pixel maps
     imgs = []
     labs = []
+    neighs = []
 
     it = 0
     h, w = img.shape[:2]
+
+    footprint = np.array([[1, 1, 1],
+                          [1, 1, 1],
+                          [1, 1, 1]])
+
+    def WeightFunc(a):
+        a = a.reshape((3, 3))
+        return np.average(a, weights=np.array([[0.5, 0.5, 0.5], [0.5, 2, 0.5],
+                                               [0.5, 0.5, 0.5]]))
 
     # no handwritten elements on entire page
     if len(mask) < 1:
@@ -50,7 +62,7 @@ def random_crop(args, pid, img, mask=[]):
                               (args.box - args.hwbox) / args.hwbox + 1).astype(int)
 
         sample = 0
-        max_samples = int(150. * (len(x) * 1. / (h * w)))
+        max_samples = int(250. * (len(x) * 1. / (h * w)))
         while sample < max_samples:
 
             # 1. select box
@@ -76,23 +88,69 @@ def random_crop(args, pid, img, mask=[]):
 
                     crop_img = img[min(rand_hs):max(rand_hs),
                                    min(rand_ws):max(rand_ws)]
-                    imgs.append(crop_img)
 
                     labels = []
                     for ys in indices:
+                        row = []
                         for xs in indices:
                             sub_mask = crop_mask[ys:ys + args.hwbox,
                                                  xs:xs + args.hwbox]
                             sub = np.sum(sub_mask.flatten() == 255)
 
-                            if sub * 1. / (args.hwbox**2) > 0.12:
-                                labels.append(1)
-                            else:
-                                labels.append(0)
-                    labs.append(labels)
+                            sub_img = crop_img[ys:ys + args.hwbox,
+                                               xs:xs + args.hwbox]
+                            gray_img = cv2.bitwise_not(
+                                cv2.cvtColor(sub_img, cv2.COLOR_BGR2GRAY))
+                            mask_img = cv2.bitwise_and(gray_img, gray_img,
+                                                       mask=sub_mask)
 
+                            gvals_dic = Counter(gray_img.flatten())
+                            mvals_dic = Counter(mask_img.flatten())
+                            mvals = [item for key,
+                                     item in mvals_dic.items() if key > 15]
+
+                            if sub > 0 and sum(mvals) > 4:
+                                # print("gray_img:")
+                                # print(sorted(gvals_dic.items(),
+                                #              key=operator.itemgetter(0)))
+
+                                # print("mask_img:")
+                                # print(sorted(mvals_dic.items(),
+                                #              key=operator.itemgetter(0)))
+
+                                # print("Non-zeros: %i" % sum(mvals))
+
+                                # fig = plt.figure()
+                                # plt.subplot(221)
+                                # plt.imshow(sub_img, vmin=0, vmax=255)
+
+                                # plt.subplot(222)
+                                # plt.imshow(sub_mask, vmin=0, vmax=255)
+
+                                # plt.subplot(223)
+                                # plt.imshow(gray_img, vmin=0, vmax=255)
+
+                                # plt.subplot(224)
+                                # plt.imshow(mask_img, vmin=0, vmax=255)
+                                # plt.show()
+
+                                row.append(1)
+
+                            else:
+                                row.append(0)
+                        labels.append(row)
+
+                    strict_labels = np.array(labels, dtype=float)
+                    neigh_labels = ndimage.generic_filter(strict_labels,
+                                                          WeightFunc,
+                                                          footprint=footprint,
+                                                          mode='nearest')
+                    imgs.append(crop_img)
+                    labs.append(strict_labels.flatten())
+                    neighs.append(neigh_labels.flatten())
                     sample += 1
-    return imgs, labs
+
+    return imgs, labs, neighs
 
 
 def mp_sampler(zipped):
@@ -194,19 +252,28 @@ def main(args):
 
     samples = []
     samp_labs = []
+    samp_neighs = []
     samps = 0
     # 1. sample/ select all HW elements
     for s in zip(hasHW_group, hasHWitems):
-        imgs, labs = mp_sampler(s)
+        imgs, str_labs, neigh_labs = mp_sampler(s)
         samps += len(imgs)
         if len(imgs) > 0:
             samples.extend(imgs)
-            samp_labs.extend(labs)
+            samp_labs.extend(str_labs)
+            samp_neighs.extend(neigh_labs)
+
+    # 2. sample/select without caring about HW elements
+    # print(samps)
+    # groupitems = [args] * len(grouped)
+    # for g in zip(grouped, groupitems):
+    #     if
+
     f = open("pixel_maps_%i.pkl" % samps, "wb")
     pkl.dump(samples, f)
     pkl.dump(samp_labs, f)
+    pkl.dump(neigh_labs, f)
     f.close()
-    # print(samps, len(samples))
 
     # for name, group in grouped:
     # print(name)
