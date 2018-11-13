@@ -50,3 +50,7 @@ Interface to easily query a trained cnn.
 **LogAnalyzer.py**
 
 File containing functionality to analyze and visualize the training process of the cnn.
+
+**Training Data**
+
+https://www.dropbox.com/sh/rs7cg4x3q6gx1kx/AAAvdm097o6C3GPitm5SeHYPa?dl=0

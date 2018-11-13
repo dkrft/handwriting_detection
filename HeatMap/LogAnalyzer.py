@@ -104,7 +104,7 @@ def precision(model_index, data_set):
 
 
 if __name__ == '__main__':
-    print_best_iteration()
-    #show_loss_log()
+    #print_best_iteration()
+    show_loss_log()
     #show_accuracy_log()
     #print(precision(1000, 'ariel_26-10_5959.pkl'))

@@ -7,7 +7,7 @@ import HWInterface
 import time
 
 
-def nearest_neighbour_heat_map(img, sample_size=150, skip_param=1000, heat_map_scale=25):
+def nearest_neighbour_heat_map(img, sample_size=150, skip_param=1000, heat_map_scale=10):
     # create heat map
     height = img.shape[0]
     width = img.shape[1]
@@ -62,9 +62,7 @@ def nearest_neighbour_heat_map(img, sample_size=150, skip_param=1000, heat_map_s
 def nearest_neighbour_heat_map_mp(img, sample_size=150, heat_map_scale=5, prediction_size=10):
     # create heat map
     height = img.shape[0]
-    print('height ' + str(height))
     width = img.shape[1]
-    print('width ' + str(width))
     stride_y = height // (height // sample_size)
     stride_x = width // (width // sample_size)
     heat_map = np.zeros((height // heat_map_scale, width // heat_map_scale))
@@ -74,7 +72,7 @@ def nearest_neighbour_heat_map_mp(img, sample_size=150, heat_map_scale=5, predic
     padded_img = np.pad(img, ((border, border + 1),(border, border + 1), (0,0)), 'edge')
 
     # load cnn
-    cnn = HWInterface.HWInterface(model_path='trained_model', model_index=2100)
+    cnn = HWInterface.HWInterface(model_path='../model_archive/11_13', model_index=300)
     print('CNN loaded')
 
     # make predictions

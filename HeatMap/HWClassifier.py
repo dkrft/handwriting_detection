@@ -9,11 +9,12 @@ DEFAULT_FILE_NAME = 'hw_classifier'
 DEFAULT_IMAGE_SIZE = 150
 DEFAULT_IMAGE_CHANNELS = 3
 DEFAULT_FILTER_SIZE = 5
-DEFAULT_FILTER_NUM = 15
-DEFAULT_FC_LAYER_1_SIZE = 225
-DEFAULT_FC_LAYER_2_SIZE = 25
+DEFAULT_FILTER_NUM = 25
+DEFAULT_FC_LAYER_1_SIZE = 450
+DEFAULT_FC_LAYER_2_SIZE = 150
+DEFAULT_FC_LAYER_3_SIZE = 50
 DEFAULT_OUTPUT_SIZE = 100
-DEFAULT_TRAINING_ITERATION_NUM = 5000
+DEFAULT_TRAINING_ITERATION_NUM = 10000
 DEFAULT_TRAINING_BATCH_SIZE = 100
 DEFAULT_SAVE_INTERVAL = 100
 DEFAULT_POS_WEIGHT = 1
@@ -26,6 +27,7 @@ def create_model(
         filter_num= DEFAULT_FILTER_NUM,
         fc_layer_1_size = DEFAULT_FC_LAYER_1_SIZE,
         fc_layer_2_size = DEFAULT_FC_LAYER_2_SIZE,
+        fc_layer_3_size = DEFAULT_FC_LAYER_3_SIZE,
         output_size= DEFAULT_OUTPUT_SIZE,
         pos_weight= DEFAULT_POS_WEIGHT):
 
@@ -51,8 +53,11 @@ def create_model(
     drop_out_layer_3 = tf.layers.dropout(full_layer_1, rate=0.5, name='drop_out_layer_3')
     full_layer_2 = tf.layers.dense(drop_out_layer_3, fc_layer_2_size,
                                    activation=tf.nn.relu, name='full_layer_2')
+    drop_out_layer_4 = tf.layers.dropout(full_layer_2, rate=0.5, name='drop_out_layer_4')
+    full_layer_3 = tf.layers.dense(drop_out_layer_4, fc_layer_3_size,
+                                   activation=tf.nn.relu, name='full_layer_3')
 
-    y_pred = tf.layers.dense(full_layer_2, output_size, activation=None, name='y_pred')
+    y_pred = tf.layers.dense(full_layer_3, output_size, activation=None, name='y_pred')
 
     # loss function for optimizer
     loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(logits=y_pred,
