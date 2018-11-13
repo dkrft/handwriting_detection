@@ -12,8 +12,8 @@ DEFAULT_FILTER_SIZE = 5
 DEFAULT_FILTER_NUM = 15
 DEFAULT_FC_LAYER_1_SIZE = 225
 DEFAULT_FC_LAYER_2_SIZE = 25
-DEFAULT_OUTPUT_SIZE = 1
-DEFAULT_TRAINING_ITERATION_NUM = 7500
+DEFAULT_OUTPUT_SIZE = 100
+DEFAULT_TRAINING_ITERATION_NUM = 5000
 DEFAULT_TRAINING_BATCH_SIZE = 100
 DEFAULT_SAVE_INTERVAL = 100
 DEFAULT_POS_WEIGHT = 1
@@ -31,7 +31,7 @@ def create_model(
 
     # input templates
     x = tf.placeholder(tf.float32, shape=[None, image_size, image_size, image_channels], name='x')
-    y_true = tf.placeholder(tf.float32, shape=[None, 1], name='y_true')
+    y_true = tf.placeholder(tf.float32, shape=[None, output_size], name='y_true')
 
     conv_layer_1 = tf.layers.conv2d(x, filter_num, (filter_size,filter_size),
                                   padding='same', activation=tf.nn.relu, name="conv_layer_1")
@@ -148,28 +148,29 @@ def train_cnn(session, model, training_data,
                 pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
 
 def main():
+    # load training data from from pickle file
+    with open('../training_data/ariel_pixel_maps_877.pkl', 'rb') as f:
+        training_data = pickle.load(f)
+    print('training data loaded')
+    pos_weight = compute_pos_weight(training_data['y_train'] + training_data['y_test'])
+
     # create computational graph and session
     session = tf.Session()
 
     # create cnn model
-    model = create_model()
+    model = create_model(pos_weight=pos_weight)
     print('model created')
 
     # convert Ariel's data set
-    #with open('training_data/equalSamp_26-10_5959.pkl', 'rb') as f:
+    #with open('../training_data/pixel_maps_877.pkl', 'rb') as f:
     #    files = pickle.load(f)
     #    labels = pickle.load(f)
     #    labels = [[label] for label in labels]
     #x_train, x_test, y_train, y_test = train_test_split(files, labels, test_size=0.30, random_state=42)
     #training_data = {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
-    #with open('training_data/ariel_26-10_5959.pkl', 'wb+') as f:
+    #with open('../training_data/ariel_pixel_maps_877.pkl', 'wb+') as f:
     #    pickle.dump(training_data, f, pickle.HIGHEST_PROTOCOL)
     #print('training data saved')
-
-    # load training data from from pickle file
-    with open('training_data/ariel_26-10_5959.pkl', 'rb') as f:
-        training_data = pickle.load(f)
-    print('training data loaded')
 
     # train cnn
     train_cnn(session, model, training_data)

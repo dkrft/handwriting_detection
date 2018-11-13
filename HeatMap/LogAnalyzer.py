@@ -69,7 +69,7 @@ def precision(model_index, data_set):
     print('model loaded')
 
     # load data
-    with open('training_data/' + data_set, 'rb') as f:
+    with open('../training_data/' + data_set, 'rb') as f:
         data = pickle.load(f)
     print('data loaded')
 
@@ -104,7 +104,7 @@ def precision(model_index, data_set):
 
 
 if __name__ == '__main__':
-    #print_best_iteration()
+    print_best_iteration()
     #show_loss_log()
     #show_accuracy_log()
-    print(precision(1000, 'ariel_26-10_5959.pkl'))
+    #print(precision(1000, 'ariel_26-10_5959.pkl'))

@@ -6,15 +6,15 @@ import math
 
 class HWInterface:
 
-    def __init__(self, model_index):
+    def __init__(self, model_path, model_index):
         # create session
         self.session = tf.Session()
 
         # load model
         cwd = os.getcwd()
-        path = os.path.join(cwd, 'trained_model/hw_classifier-0.meta')
+        path = os.path.join(cwd, model_path + '/hw_classifier-0.meta')
         saver = tf.train.import_meta_graph(path)
-        saver.restore(self.session, 'trained_model/hw_classifier-' + str(model_index))
+        saver.restore(self.session, model_path + '/hw_classifier-' + str(model_index))
 
 
         # get in and output tensors
@@ -24,7 +24,7 @@ class HWInterface:
 
     def predict(self, x):
         feed_dict = {self.x: x}
-        return [1 / (1 + math.exp(-y)) for y in self.session.run(self.y, feed_dict)]
+        return [[1 / (1 + math.exp(-y[i])) for i in range(len(y))] for y in self.session.run(self.y, feed_dict)]
 
 
 #if __name__ == '__main__':
