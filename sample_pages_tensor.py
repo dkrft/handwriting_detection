@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import re
 # import IPython
-# from collections import defaultdict
 import pickle as pkl
 import multiprocessing as mp
 import argparse
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 import operator
 import scipy.ndimage as ndimage
 
@@ -37,6 +36,9 @@ def random_crop(args, pid, img, mask=[]):
     labs = []
     neighs = []
 
+    # creating dictionary to store values for analytics
+    holder = defaultdict(list)
+
     it = 0
     h, w = img.shape[:2]
 
@@ -62,7 +64,7 @@ def random_crop(args, pid, img, mask=[]):
                               (args.box - args.hwbox) / args.hwbox + 1).astype(int)
 
         sample = 0
-        max_samples = int(250. * (len(x) * 1. / (h * w)))
+        max_samples = int(150. * (len(x) * 1. / (h * w)))
         while sample < max_samples:
 
             # 1. select box
@@ -109,35 +111,55 @@ def random_crop(args, pid, img, mask=[]):
                             mvals = [item for key,
                                      item in mvals_dic.items() if key > 15]
 
-                            if sub > 0 and sum(mvals) > 4:
-                                # print("gray_img:")
-                                # print(sorted(gvals_dic.items(),
-                                #              key=operator.itemgetter(0)))
+                            holder["pageid"].append(pid)
+                            holder["sampID"].append(sample)
+                            holder["x_min"].append(min(rand_ws))
+                            holder["x_max"].append(max(rand_ws))
+                            holder["y_min"].append(min(rand_hs))
+                            holder["y_max"].append(max(rand_hs))
+                            holder["nonzeros"].append(sum(mvals))
+                            holder["sub_y"].append(ys)
+                            holder["sub_x"].append(xs)
+                            # holder["mvals"].append(mvals_dic)
 
-                                # print("mask_img:")
-                                # print(sorted(mvals_dic.items(),
-                                #              key=operator.itemgetter(0)))
+                            if sub > 0 and sum(mvals) > 10:
+                                if args.debug:
+                                    print("gray_img:")
+                                    print(sorted(gvals_dic.items(),
+                                                 key=operator.itemgetter(0)))
 
-                                # print("Non-zeros: %i" % sum(mvals))
+                                    print("mask_img:")
+                                    print(sorted(mvals_dic.items(),
+                                                 key=operator.itemgetter(0)))
 
-                                # fig = plt.figure()
-                                # plt.subplot(221)
-                                # plt.imshow(sub_img, vmin=0, vmax=255)
+                                    print("Non-zeros: %i" % sum(mvals))
 
-                                # plt.subplot(222)
-                                # plt.imshow(sub_mask, vmin=0, vmax=255)
+                                    fig, axes = plt.subplots(nrows=2, ncols=2, )
 
-                                # plt.subplot(223)
-                                # plt.imshow(gray_img, vmin=0, vmax=255)
+                                    plt.setp(axes[0, 0].get_xticklabels(),
+                                             fontsize=10)
+                                    axes[0, 0].imshow(sub_img, vmin=0, vmax=255)
+                                    axes[0, 0].set_title("Image")
 
-                                # plt.subplot(224)
-                                # plt.imshow(mask_img, vmin=0, vmax=255)
-                                # plt.show()
+                                    axes[0, 1].imshow(sub_mask, vmin=0,
+                                                      vmax=255)
+                                    axes[0, 1].set_title("Mask")
+
+                                    axes[1, 0].imshow(gray_img, vmin=0,
+                                                      vmax=255)
+                                    axes[1, 0].set_title("Grayscale image")
+
+                                    axes[1, 1].imshow(mask_img, vmin=0,
+                                                      vmax=255)
+                                    axes[1, 1].set_title("Masked grayscale \
+                                        image")
+                                    plt.show()
 
                                 row.append(1)
-
+                                holder["hasHW"].append(1)
                             else:
                                 row.append(0)
+                                holder["hasHW"].append(0)
                         labels.append(row)
 
                     strict_labels = np.array(labels, dtype=float)
@@ -145,12 +167,13 @@ def random_crop(args, pid, img, mask=[]):
                                                           WeightFunc,
                                                           footprint=footprint,
                                                           mode='nearest')
+
                     imgs.append(crop_img)
                     labs.append(strict_labels.flatten())
                     neighs.append(neigh_labels.flatten())
                     sample += 1
 
-    return imgs, labs, neighs
+    return imgs, labs, neighs, holder
 
 
 def mp_sampler(zipped):
@@ -192,7 +215,8 @@ def mp_sampler(zipped):
 
     # TO DO| if save samp, create all sub-directories here so just called once
     hasHW = bool(group.hasHW.max())
-    # if not hasHW:
+    if not hasHW:
+        tup = random_crop(args, pageid, img, [])
     # # 1.a no masks are present; hasHW = 0
     # if "" in group["mask"].unique():
     #     # tup =
@@ -248,15 +272,25 @@ def main(args):
     hasHW_group = hasHW.groupby(["pageid", "path"], as_index=False)
 
     # creating iterable version of args
-    hasHWitems = [args] * len(hasHW_group)
+    items = [args] * len(grouped)
 
     samples = []
     samp_labs = []
     samp_neighs = []
     samps = 0
+
+    f = open("pixel_maps_%i.pkl" % samps, "wb")
+
     # 1. sample/ select all HW elements
-    for s in zip(hasHW_group, hasHWitems):
-        imgs, str_labs, neigh_labs = mp_sampler(s)
+    for it, s in enumerate(zip(grouped, items)):
+        imgs, str_labs, neigh_labs, stats = mp_sampler(s)
+
+        # if it == 0:
+        #     data = pd.DataFrame(stats)
+        # else:
+        #     df = pd.DataFrame(stats)
+        #     data = data.append(df)
+
         samps += len(imgs)
         if len(imgs) > 0:
             samples.extend(imgs)
@@ -269,7 +303,8 @@ def main(args):
     # for g in zip(grouped, groupitems):
     #     if
 
-    f = open("pixel_maps_%i.pkl" % samps, "wb")
+    data.to_hdf("statistics.hdf", key="data")
+
     pkl.dump(samples, f)
     pkl.dump(samp_labs, f)
     pkl.dump(neigh_labs, f)
@@ -311,5 +346,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_SampDir', dest='save_dir', type=str,
                         default="../data/samples/", help="directory to save random, \
                         cropped images")
+    parser.add_argument('--debug', dest='debug', type=bool,
+                        default=False, help="show images on screen to debug data\
+                       production")
     # padder(parser.parse_args, "equalSamp_26-10_s250_b150_5959.pkl")
     main(parser.parse_args())
