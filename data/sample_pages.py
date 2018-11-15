@@ -38,6 +38,11 @@ items = lambda arg, df: [arg] * len(df)
 def get_default_parser():
     """
     Obtain default parser
+
+    Returns
+    -------
+    argparse.ArgumentParser
+        argument parser object
     """
 
     # create parser object
@@ -90,17 +95,53 @@ def hw_tester(args, img, mask):
 
     Parameters
     ----------
-    args: argparser object specified in terminal command
-    img:  cropped image from random_crop()
-    mask: cropped mask from random_crop()
+    args: argparse.ArgumentParser
+        argparser object specified in get_default_parser & termianl
+
+    img: list of int
+        pixel map of cropped image from random_crop(); (args.box, args.box, 3)
+
+    mask: list of int
+        pixel map of cropped mask from random_crop(); (args.box, args.box, 1)
 
     Returns
     ----------
-    labels: array with 1's and 0's to indicate whether handwriting is
-            present or not
+    labels: list of int
+        1 if handwriting present in sub-sample; else 0
     """
-
     def labeler(sub_img, sub_mask):
+        """
+        Label sub-images.
+
+        If sub_mask has black pixels, it indicates the prescence of a
+        handwritten element. As masks may be overdrawn, the mask is applied to
+        a grayscaled sub_image. The number of pixels above a threshold of 15
+        (relatively white) are summed, and if they exceed a value, a
+        label of 1 is bestowed. If any of the criteria are not met, then the
+        sub-sample is given a 0.
+
+        Parameters
+        ----------
+        sub_img : list of int
+            pixel map of (sample of) cropped image from random_crop()
+
+        sub_mask : list of int
+            pixel map of (sample of) cropped mask from random_crop()
+
+        Internal parameters
+        --------------------
+        args.grid : bool
+            if True, the args.box**2 sample is sub-divided into args.hwbox**2
+            images and masks; these are then scrutinized individually.
+            Otherwise, only 1 label is assigned to the entire args.box**2
+            sample (img).
+
+        Returns
+        ----------
+        int
+            count of pixels with a grayscale value greater than 15 (near white)
+        """
+
         # need to convert to grayscale before mask
         gray_img = cv2.bitwise_not(cv2.cvtColor(sub_img,
                                                 cv2.COLOR_BGR2GRAY))
