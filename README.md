@@ -1,14 +1,17 @@
-# TABLE OF CONTENTS
- * Note on usage
- * System requirements
- * Accessing data
- * Processing new data
- * Further information
+# Syncs databases, processes data and generates samples
 
+Full-sized documents with and without handwriting were labeled using Labelbox. The generated 
+masks and jsons files are retrieved and made readily accessible in an HDF with handle_labels.py
 
-# NOTE ON USAGE
+The PRImA NHM provides pre-labeled in XML format:
+https://www.primaresearch.org/datasets/NHM
+read_prima.py reads in the XML data to generate masks for the images.
 
- This README is a temporary file to facilitate the development and use of the handwriting-detection project. A final README.md will be created when the tools and scripts have been generalized for everyday use.
+From the HDF, random samples of the documents are generated and labeled from the collected documents 
+and their masks; this is achieved with sample_pages.py. The resulting data is pickled and 
+used to train the CNN.
+
+### Installation
 
 
  # SYSTEM REQUIREMENTS
