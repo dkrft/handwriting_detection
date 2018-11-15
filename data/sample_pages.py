@@ -1,8 +1,8 @@
 """
-Used to sample pages listed in pandas dataframe. Intended for usage in the 
+Used to sample pages listed in pandas dataframe. Intended for usage in the
 terminal like:
 
-python sample_pages.py 250 ./labels/26-10.hdf 
+python sample_pages.py 250 ./labels/26-10.hdf
 
 OR
 
@@ -37,12 +37,13 @@ items = lambda arg, df: [arg] * len(df)
 
 def get_default_parser():
     """
-    Obtain default parser
+    Obtain default parser for script
 
     Returns
     -------
     argparse.ArgumentParser
         argument parser object
+
     """
 
     # create parser object
@@ -54,30 +55,39 @@ def get_default_parser():
     parser.add_argument('input', metavar='filename', type=str, nargs=1,
                         help='name of full HDF (not hasHW)')
 
+    # assumes that soft-linked data directory is +1 outside of full git dir
+    # so +2 ../../ outside of hwdetect/data
+    parser.add_argument("--imgDir", dest='imgDir', type=str,
+                        default="../../data", help="path to directory of \
+                        original images and masks")
+
+    parser.add_argument("--saveDir", dest='saveDir', type=str, default="./",
+                        help="path to directory to save sampling files")
     parser.add_argument('--box', dest='box', type=int,
                         default=150, help="int n (150) for creating n x n pixel \
                         box")
-    parser.add_argument('--debug', dest="debug", type=bool, default=False,
-                        help="use matplotlib to display potential HW elements\
-                        no longer parallel processing")
+    parser.add_argument('--debug', dest="debug", default=False,
+                        action='store_true', help="use matplotlib to display \
+                        potential HW elements no longer parallel processing")
 
-    # labels given if handwriting is present in only a central box of sample
-    parser.add_argument('--useSide', dest='useSide', type=bool, default=False,
-                        help='only evaluate sub-, centered box within box \
-                        as having handwriting or not; paired with --side')
+    # labels given if handwriting is present in only a central box of mask
+    # otherwise checks for non-white pixels present above a threshold
+    parser.add_argument('--noSide', dest='noSide', default=False,
+                        action='store_true', help='do not evaluate sub-, \
+                        centered box within box as having handwriting or not; \
+                        paired with --side')
     parser.add_argument('--side', dest='side', type=int, default=20,
                         help='int s (20) for creating nested (n-2s)x(n-2s) box')
 
-    # choose to sub-sample S x S box in a grid of hwbox**2 boxes
-    parser.add_argument('--grid', dest='grid', type=bool, default=False,
-                        help="mark sub-samples of box as having handwritten \
-                        elements or not")
+    # choose to sub-sample n**2 box in a grid of hwbox**2 boxes
+    parser.add_argument('--grid', dest='grid', default=False,
+                        action='store_true', help="mark sub-samples of box as \
+                        having handwritten elements or not")
     parser.add_argument('--hwbox', dest='hwbox', type=int,
                         default=15, help="int n (15) for n x n pixel sub-box \
                          for labeling if HW or not; must be int factor of box")
 
-    # save dir
-    # hdf
+    # hdf of saved data
     # fast save with just sampling handwriting
 
     # # selection criteria for samples
@@ -89,24 +99,24 @@ def get_default_parser():
 
 def hw_tester(args, img, mask):
     """
-    Test existence of handwritten text in a box or grid;
-    labels the sample or (args.hwbox**2) sub-samples of
-    the mask & image of random_crop
+    Test existence of handwritten text in a box or grid (if args.grid=True);
+    labels the sample or (args.hwbox**2) sub-samples of the mask & image
+    of random_crop
 
     Parameters
     ----------
-    args: argparse.ArgumentParser
-        argparser object specified in get_default_parser & termianl
+    args : argparse.ArgumentParser
+        argparser object specified in get_default_parser (& terminal)
 
-    img: list of int
+    img : nested list of int
         pixel map of cropped image from random_crop(); (args.box, args.box, 3)
 
-    mask: list of int
+    mask : nested list of int
         pixel map of cropped mask from random_crop(); (args.box, args.box, 1)
 
     Returns
     ----------
-    labels: list of int
+    labels : list of int
         1 if handwriting present in sub-sample; else 0
     """
     def labeler(sub_img, sub_mask):
@@ -140,6 +150,7 @@ def hw_tester(args, img, mask):
         ----------
         int
             count of pixels with a grayscale value greater than 15 (near white)
+
         """
 
         # need to convert to grayscale before mask
@@ -156,7 +167,7 @@ def hw_tester(args, img, mask):
         mvals = [item for key,
                  item in mvals_dic.items() if key > 15]
 
-        if args.debug:
+        if args.debug and sum(mvals) > 0:
             matplotlib.rc('xtick', labelsize=10)
             matplotlib.rc('ytick', labelsize=10)
 
@@ -204,11 +215,18 @@ def hw_tester(args, img, mask):
                 else:
                     labels.append(0)
     else:
-        # number of pixels with HW mask present
+        # sum number of pixels with HW mask present
         sub = np.sum(mask.flatten() == 255)
         mvals = labeler(img, mask)
 
-        if sub > 0 and mvals > 10:
+        # inset of mask box to ensure HW mask not on edge;
+        # does NOT guarantee that HW there, as mask may be overdrawn
+        inset_mask = mask[args.side:args.box - args.side,
+                          args.side:args.box - args.side]
+        inset_sum = np.sum(inset_mask.flatten() == 255)
+
+        if sub > 0 and ((not args.noSide and inset_sum > 0) or
+                        (args.noSide and mvals > 10)):
             labels = [1]
         else:
             labels = [0]
@@ -222,15 +240,24 @@ def random_crop(args, pid, img, mask=[]):
 
     Parameters
     ----------
-    args: argparser object specified in terminal command
-    pid: pageid for saving out img (if specified in args)
-    img: imread object of img (df["path"])
-    mask: array with imread object of masks (df["mask"]) in bitwise_or
+    args : argparse.ArgumentParser
+        argparser object specified in get_default_parser (& terminal)
+
+    pid : int
+        pageid for saving out img (if specified in args)
+
+
+    img : nested list of int
+        pixel map of cropped image; shape = (args.box, args.box, 3)
+
+    mask : nested list of int
+        pixel map of cropped mask; shape = (args.box, args.box, 1)
 
     Returns
     ----------
-    holder: dict with cropped images and sub-sample labels
-            sorted into noHW_img, noHW_lab, HW_img, HW_lab
+    dict
+        with cropped images and sub-sample labels sorted into
+        noHW_img, noHW_lab, HW_img, HW_lab
     """
 
     # creating container for holding samples of page
@@ -286,16 +313,19 @@ def mp_sampler(zipped):
     """
     Load images and masks, rescale, and pass onto random_crop()
     for (args.samples[0]) samplings. Returns result of sampling
-    to main
+    to main.
 
     Parameters
     ----------
-    zipped: zipped object of grouped df and argparser object
+    zipped : zip object
+        zipped object of grouped df and argparser object
 
     Returns
     ----------
-    dic: dict from random_crop contains samplings of page and
-         labels from random_crop()
+    dict
+        from random_crop contains samplings of page and
+        labels from random_crop()
+
     """
 
     # parsing zipped input
@@ -304,14 +334,16 @@ def mp_sampler(zipped):
 
     # if more than one mask, path will be duplicated
     path = group["path"].unique()[0]
+    # as data engineer's relative path may differ from user's
+    new_path = args.imgDir + path.split('data')[1]
 
     # variable for if saving out random cropped images
-    base = (os.path.normpath(path)).split(os.sep)[2]
-    page_base = os.path.splitext(os.path.basename(path))[0]
+    base = (os.path.normpath(new_path)).split(os.sep)[2]
+    page_base = os.path.splitext(os.path.basename(new_path))[0]
     pageid = "%s_%s" % (base, page_base)
 
     # 0 import in image and masks
-    img = cv2.imread(path)
+    img = cv2.imread(new_path)
     h, w = img.shape[:2]
 
     # 0.a rescale images in way to preserve aspect ratio
@@ -339,7 +371,9 @@ def mp_sampler(zipped):
                 continue
 
             # otherwise, handwritten element
-            mask = cv2.imread(el["mask"], 0)
+            mask_path = el["mask"]
+            new_mask_path = args.imgDir + mask_path.split('data')[1]
+            mask = cv2.imread(new_mask_path, 0)
             if len(or_mask) < 1:
                 or_mask = mask
             else:
@@ -353,24 +387,37 @@ def mp_sampler(zipped):
     return dic
 
 
-def equalizer(date, HW, num_HW, noHW, num_noHW):
+def equalizer(args, date, HW, num_HW, noHW, num_noHW):
     """
     Equally select HW and noHW elements using num_HW
     as sample size for each population
 
     Parameters
     ----------
-    date:
-    HW: name of pickled file with HW elements
-    num_HW: # of added HW elements
-    noHW: name of pickled file with noHW elements
-    num_noHW: # of added noHW elements
+    args : argparse.ArgumentParser
+        argparser object specified in get_default_parser (& terminal)
 
-    Returns
+    date: str
+        date taken from path of HDF file containig tabulated data
+
+    HW : str
+        name of pickled file with HW elements from main()
+
+    num_HW : int
+        number of added HW elements; used for loading pkl file
+
+    noHW : str
+        name of pickled file with noHW elements from main()
+
+    num_noHW : int
+        number of added noHW elements; used for loading pkl file
+
+    Outputs
     ----------
-    equalSamp*.pkl: pickled file with equal selection from random*.pkl
-                    of cropped images with or without handwritten text;
-                    need to randomly select from/shuffle as ordered data
+    equalSamp*.pkl
+        pickled file with equal selection from random*.pkl
+        of cropped images with or without handwritten text;
+        need to randomly select from/shuffle as ordered data
 
     """
     pixels = []
@@ -425,7 +472,7 @@ def equalizer(date, HW, num_HW, noHW, num_noHW):
             obj_labs = []
 
     if len(pixels) == len(labels) and np.abs(len(pixels) - 2 * limit) < 4:
-        name = "equalSamp_%s_%s.pkl" % (date, limit)
+        name = "%s/equalSamp_%s_%s.pkl" % (args.saveDir, date, limit)
         h = open(name, 'wb')
         pkl.dump(pixels, h)
         pkl.dump(labels, h)
@@ -462,10 +509,18 @@ def main(args):
     hdf_path = args.input[0]
     data = pd.read_hdf(hdf_path)
 
+    # ensuring save directory exists
+    if not os.path.isdir(args.saveDir):
+        os.mkdir(args.saveDir)
+
     # creating files to save out random selections
     base = os.path.splitext(os.path.basename(hdf_path))[0]
-    HW_file = "random_%s_%sea_HW.pkl" % (base, args.samples[0])
-    noHW_file = "random_%s_%sea_noHW.pkl" % (base, args.samples[0])
+    filebase = "%s/random_%s_samp%s_box%s_side%s" % (args.saveDir, base,
+                                                     args.samples[0],
+                                                     args.box,
+                                                     args.side if not args.noSide else 0)
+    HW_file = "%s_HW.pkl" % (filebase)
+    noHW_file = "%s_noHW.pkl" % (filebase)
 
     f_HW = open(HW_file, "wb")
     g_noHW = open(noHW_file, "wb")
@@ -509,8 +564,8 @@ def main(args):
             print("%s pages processed" % count)
 
     # after running randomizer; re-process data to get roughly
-    # equal number of HW and no HW 150 x 150 px images
-    equalizer(base, HW_file, num_pagesHW, noHW_file, num_pages)
+    # equal number of HW and no HW n x n px images
+    equalizer(args, base, HW_file, num_pagesHW, noHW_file, num_pages)
 
 
 if __name__ == '__main__':
