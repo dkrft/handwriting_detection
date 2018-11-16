@@ -18,8 +18,8 @@ def homepage():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-	if not os.path.isdir(UPLOAD_FOLDER):
-		os.mkdir(app.config["UPLOAD_FOLDER"])
+    if not os.path.isdir(app.config["UPLOAD_FOLDER"]):
+        os.mkdir(app.config["UPLOAD_FOLDER"])
     file = request.files['image']
     f = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
 
