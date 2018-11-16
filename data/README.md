@@ -1,14 +1,15 @@
 # Syncs databases, processes data and generates samples
 
 Full-sized documents with and without handwriting were labeled using Labelbox. The generated 
-masks and jsons files are retrieved and made readily accessible in an HDF with handle_labels.py
+masks and jsons files are retrieved and made readily accessible in an HDF with **handle_Labelbox.py**
+(As we did not pay for Labelbox, we did not have access to their superb API.)
 
 The PRImA NHM provides pre-labeled in XML format:
 https://www.primaresearch.org/datasets/NHM
-read_prima.py reads in the XML data to generate masks for the images.
+**read_PRImA.py** reads in the XML data to generate masks for the images.
 
 From the HDF, random samples of the documents are generated and labeled from the collected documents 
-and their masks; this is achieved with sample_pages.py. The resulting data is pickled and 
+and their masks; this is achieved with **sample_pages.py**. The resulting data is pickled and 
 used to train the CNN.
 
 ### Installation
@@ -20,7 +21,7 @@ used to train the CNN.
  * urllib
 
 
-# ACCESSING DATA
+### Accessing data
  1. Create a folder (e.g. project) to house the project. 
 
  2. Create a soft link from your Dropbox folder to a sub-folder known as data:
@@ -39,7 +40,7 @@ used to train the CNN.
     - mark_mask       holds masks associated with marks (non-textual handwriting)
 
 
-# PROCESSING NEW DATA
+### Processing data
 
  1. [In Dropbox]
     * To avoid accidentally re-adding data to Labelbox, new data should be first acculumated in a sub-folder img/ within a folder named with the current date (DD-MM); for example:
@@ -63,8 +64,8 @@ used to train the CNN.
      * After this, feel free to use the convenience functions to generate whatever sub-selection(s) of the master dataframe (DD-MM.hdf) you need for your analysis.
 
 
-# FURTHER INFORMATION
- Checkout the about_json and about_hdf to learn more about the data currently stored and how to access additional features.
+### Further information
+ Checkout the about_json and about_hdf to learn more about the data (column names, etc.) currently stored and how to access additional features.
 
- # CAVEATS
- Machine signatures (hwType=mach_sig) may be on pages with or without handwritten elements. As these items, themselves are not handwritten, they have hasHW = 0. When condensing dataframes for page identification, ensure that hasHW's aggregate uses max.
+### Caveats
+ Machine signatures (hwType="mach_sig" in the HDF) may be on pages with or without handwritten elements. As these items, themselves are not handwritten, they have hasHW = 0  in the HDF. When condensing dataframes for page identification, ensure that hasHW's aggregate uses max.
