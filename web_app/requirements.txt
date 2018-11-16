@@ -1,7 +1,4 @@
 gunicorn==19.9.0
-requests==2.19.1
 Flask==0.12
-pandas==0.19.2
-bokeh==0.12.4
-quandl
-numpy==1.15.2
+opencv-python==3.4.3.18
+tensorflow==1.11.0
