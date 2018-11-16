@@ -1,0 +1,122 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Stock ticker look-up">
+    <meta name="author" content="@gotoariel">
+
+    <title>Stock ticker look-up</title>
+
+    <!-- <link rel="stylesheet" href='{ url_for('static', filename='style.css')}' type="text/css" /> -->
+    <link rel="stylesheet" href="//cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.css" type="text/css" />
+    <script type="text/javascript" src="//cdn.pydata.org/bokeh/release/bokeh-0.12.4.min.js"></script>
+    
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+      body{
+        padding-top:70px;
+        margin-left: 30px;
+      }
+    </style>
+    <style type="text/css">  a[data-v-11b2e33f] { cursor: pointer; }
+    </style>
+
+  </head>
+  <body>
+   <!--navigation bar-->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      
+      <div class="container">
+        
+        <!-- group brand & toggle together for mobile display-->
+        <div class="navbar-header">
+          
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#nav1">
+            <span class="sr-only"> Toggle navigation</span>
+          </button>
+          <span class="navbar-brand">Stock look-up app</span>
+          
+        </div>
+
+        <!-- designing navigation bar when on browser-->
+        <div class="collapse navbar-collapse" id="nav-1">
+          <ul class="nav navbar-nav">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">
+                New query
+                <span class="sr-only"> (current)</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://www.eoddata.com/symbols.aspx">
+                Ticker symbol lists
+              </a>
+            </li>
+
+            <li class="nav-item ">
+              <a class="nav-link" href="https://github.com/ArBridgeman">
+                GitHub
+                <span class="sr-only"> (current)</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        
+      </div>
+      
+    </nav>
+
+    
+    <div class="col-lg-12 text-left">
+      <p>
+        This page queries the <a href="https://www.quandl.com/data/WIKI-Wiki-EOD-Stock-Prices"> Quandl WIKI datasets API</a> to generate an interactive plot of the requested information.
+      </p>
+      <form action='/graph' method = "post">
+            <p>
+              <h4>Ticker Symbol</h4>
+              <input type="text" name="ticker" value="AMZN">
+              <br>
+              <h4> Select data to view:</h4>
+              <input type='checkbox' value='Yes' name='adj_open' checked>
+              Adj. open
+              <br>
+              <input type='checkbox' value='Yes' name='adj_close'>
+              Adj. close
+              <br>
+              <input type='checkbox' value='Yes' name='open' checked>
+              Open
+              <br>
+              <input type='checkbox' value='Yes' name='close'>
+              Close
+              <br>
+            </p>
+            <div>
+              <h4> Specify date range:</h4>
+              <label for="start">Start</label>
+              <input type="date" id="start" name="start" value="2015-07-22" min="1997-01-01" max="2018-12-30" />
+              <br>
+              <label for="end">End</label>
+              <input type="date" id="end" name="end" value="2015-10-22" min="1997-01-02" max="2018-12-31" />
+              <br>
+              <h4> Downsample if date range greater than 2 years? </h4>
+              <p>
+              <input type="radio" name="yes_no" value="1" checked>Yes</input>
+              </p>
+              <p>
+              <input type="radio" name="yes_no" value="0">No</input>
+              </p>
+              <br>
+              <input type="submit" value="Submit">
+            </p>
+      </form>
+    </div>
+    
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+  </body>
+</html>
