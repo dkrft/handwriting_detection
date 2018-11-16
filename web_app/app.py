@@ -27,7 +27,7 @@ def upload_file():
     # and not a malicious file (out-of-scope for this post)
     file.save(f)
 
-    return render_template('index.html')
+    return render_template('home.html')
 
 if __name__ == '__main__':
     app.run(debug=True)  # Set to false when deploying
