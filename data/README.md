@@ -24,9 +24,12 @@ Folder structure:
     - mark_mask       holds masks associated with marks (non-textual handwriting)
 
  * Compiled databases of the original images and masks are saved in **labels** with the date of last labeled data it contains as the filename (DD-MM.\*).
-    - \*.json&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;files directly downloaded from Labelbox and renamed
-    - \*.hdf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;each labeled element of a page is given in a row in the dataframe
-    - \*hasHW.hdf&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;each unique document is given in a row of the dataframe; specific sampling from \*.hdf
+
+File extension | Description
+---------------| ------------------------------------------------------------------------------------- |
+\*.json        |files directly downloaded from Labelbox and renamed                                    |
+\*.hdf         |each labeled element of a page is given in a row in the dataframe                      |
+\*hasHW.hdf    |each unique document is given in a row of the dataframe; specific sampling from \*.hdf |
 
 ### Data in Dropbox
 
