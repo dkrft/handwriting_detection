@@ -1,7 +1,9 @@
 # Load the packages
 
+import cv2
 from flask import Flask, render_template, request
 import os
+import plotly
 
 # Connect the app
 app = Flask(__name__)
@@ -24,8 +26,8 @@ def upload_file():
     f = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
 
     # add your custom code to check that the uploaded file is a valid image
-    # and not a malicious file (out-of-scope for this post)
     file.save(f)
+    img = cv2.imread(f)
 
     return render_template('home.html')
 

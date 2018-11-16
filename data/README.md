@@ -17,13 +17,14 @@ used to train the CNN.
 
 
 ### Obtain data from Dropbox
-The original images and their masks are collected by _dated folders_ (of form **DD-MM**) and each has the structure detailed in the table below.
+The original images and their masks are collected by _dated folders_ (of form **DD-MM**) and each has the structure detailed in the table below. Masks are black and white PNGs created by Labelbox to indicate where an element of that type was indicated (white contours).
 
-Directory | Description
-----------| ----------------------------------------------------------- |
-img       | has original jpgs that are uploaded to Labelbox             |
-text_mask | contains mask PNGs associated with handwritten text         |
-mark_mask | holds masks associated with marks (non-textual handwriting) |
+Directory    | Description
+------------ | ----------------------------------------------------------- |
+img          | has original jpgs that are uploaded to Labelbox             |
+text_mask    | contains mask PNGs associated with handwritten text         |
+mark_mask    | holds masks associated with marks (non-textual handwriting) |
+machine_mask | masks associated with machine-generated signatures          |
 
 
 Compiled databases of the original images and masks are saved in **labels** with the date of last labeled data it contains as the filename (DD-MM.\*). The table below lists the type of files stored in this directory and their purpose. The HDFs are derived from the JSON files of the same name and are produced by the **handle_Labelbox.py** script.
@@ -38,7 +39,7 @@ File extension | Description
 
  1. Create a folder (e.g. project) to house the project. 
 
- 2. Create a soft link from yo Dropbox folder to a sub-folder known as data:
+ 2. Create a soft link from your Dropbox folder to a sub-folder known as data:
      ```ln -s <DROPBOX_PATH>/Training\ Data/ ./data```
 
  3. Within another sub-folder (name not important), clone the [hwdetect github repository](https://github.com/dkrft/handwriting_detection). 
