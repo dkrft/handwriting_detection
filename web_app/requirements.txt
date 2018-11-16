@@ -1,4 +1,5 @@
 gunicorn==19.9.0
 Flask==0.12
+opencv-python
 tensorflow==1.11.0
 plotly
