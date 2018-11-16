@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 
-UPLOAD_FOLDER = os.path.basename('uploads')
+UPLOAD_FOLDER = os.path.basename('tmp')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
