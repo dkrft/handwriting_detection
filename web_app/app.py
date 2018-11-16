@@ -7,8 +7,7 @@ import os
 app = Flask(__name__)
 
 
-UPLOAD_FOLDER = os.path.basename('tmp')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = 'tmp'
 
 
 @app.route('/')
@@ -19,6 +18,8 @@ def homepage():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+	if not os.path.isdir(UPLOAD_FOLDER):
+		os.mkdir(app.config["UPLOAD_FOLDER"])
     file = request.files['image']
     f = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
 
