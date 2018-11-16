@@ -17,13 +17,16 @@ used to train the CNN.
 
 
 ### Obtain data from Dropbox
-Folder structure:
- * The original images and their masks are collected by _dated folders_ (of form **DD-MM**) and each has this structure:
-    - img             has original jpgs that will be uploaded to Labelbox
-    - text_mask       contains masks associated with handwritten text
-    - mark_mask       holds masks associated with marks (non-textual handwriting)
+The original images and their masks are collected by _dated folders_ (of form **DD-MM**) and each has the structure detailed in the table below.
 
- * Compiled databases of the original images and masks are saved in **labels** with the date of last labeled data it contains as the filename (DD-MM.\*).
+Directory | Description
+----------| ----------------------------------------------------------- |
+img       | has original jpgs that are uploaded to Labelbox             |
+text_mask | contains mask PNGs associated with handwritten text         |
+mark_mask | holds masks associated with marks (non-textual handwriting) |
+
+
+Compiled databases of the original images and masks are saved in **labels** with the date of last labeled data it contains as the filename (DD-MM.\*). The table below lists the type of files stored in this directory and their purpose. The HDFs are derived from the JSON files of the same name and are produced by the **handle_Labelbox.py** script.
 
 File extension | Description
 ---------------| ------------------------------------------------------------------------------------- |
