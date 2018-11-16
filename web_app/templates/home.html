@@ -8,7 +8,6 @@
       
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="style.css">
     <style>
       body{
         padding-top:70px;
@@ -47,12 +46,13 @@
       </div>
     </nav>
 
+    <form action="/upload" method="post" enctype="multipart/form-data" >
+        <span class="btn btn-default btn-file">
+          Browse <input type="file" name="image">
+        </span>
 
-    <div class="upload-btn-wrapper">
-      <button class="btn">Upload a file</button>
-      <input type="file" name="myfile" />
-    </div>
-
+      <input type="submit" value="Upload your image" class="btn btn-primary">
+    </form>
     
     <!-- Bootstrap core JavaScript
     ================================================== -->
