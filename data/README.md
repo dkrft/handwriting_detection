@@ -4,31 +4,20 @@ Full-sized documents with and without handwriting were labeled using Labelbox. T
 masks and jsons files are retrieved and made readily accessible in an HDF with **handle_Labelbox.py**
 (As we did not pay for Labelbox, we did not have access to their superb API.)
 
-The PRImA NHM provides pre-labeled in XML format:
+The [NHM PRImA](https://www.primaresearch.org/datasets/NHM) provides pre-labeled in XML format. **read_PRImA.py** reads in the XML data to generate masks for the images and a compiled HDF similar to that made for our Labelbox data in handle_Labelbox.py.
 
-https://www.primaresearch.org/datasets/NHM
-
-**read_PRImA.py** reads in the XML data to generate masks for the images.
-
-From the HDF, random samples of the documents are generated and labeled from the collected documents 
+From an HDF dataframe, random samples of the documents are generated and labeled from the collected documents 
 and their masks; this is achieved with **sample_pages.py**. The resulting data is pickled and 
 used to train the CNN.
 
 ### Installation
  * python 3.6.6
- * pandas
+ * pandass
  * urllib
 
 
-### Accessing data
- 1. Create a folder (e.g. project) to house the project. 
-
- 2. Create a soft link from your Dropbox folder to a sub-folder known as data:
-     ```ln -s <DROPBOX_PATH>/Training\ Data/ ./data```
-
- 3. Within another sub-folder (name not important), clone the [hwdetect github repository](https://github.com/dkrft/handwriting_detection).
-
-##### Dropbox
+### Obtain data from Dropbox
+Folder structure:
  * The original images and their masks are collected by _dated folders_ (of form **DD-MM**) and each has this structure:
     - img             has original jpgs that will be uploaded to Labelbox
     - text_mask       contains masks associated with handwritten text
@@ -38,7 +27,15 @@ used to train the CNN.
     - \*.json         files directly downloaded from Labelbox and renamed
     - \*.hdf          each labeled element of a page is given in a row in the dataframe
     - \*hasHW.hdf     each unique document is given in a row of the dataframe; specific sampling from \*.hdf
- 
+
+### Data in Dropbox
+
+ 1. Create a folder (e.g. project) to house the project. 
+
+ 2. Create a soft link from yo Dropbox folder to a sub-folder known as data:
+     ```ln -s <DROPBOX_PATH>/Training\ Data/ ./data```
+
+ 3. Within another sub-folder (name not important), clone the [hwdetect github repository](https://github.com/dkrft/handwriting_detection). 
 
 ### Processing data
 
