@@ -1,5 +1,5 @@
 """
-Used to sample pages listed in pandas dataframe. Intended for usage in the
+Sample pages listed in pandas dataframe. Intended for usage in the
 terminal like:
 
 python sample_pages.py 250 ./labels/26-10.hdf
@@ -58,11 +58,18 @@ def get_default_parser():
     # assumes that soft-linked data directory is +1 outside of full git dir
     # so +2 ../../ outside of hwdetect/data
     parser.add_argument("--imgDir", dest='imgDir', type=str,
-                        default="../../data", help="path to directory of \
-                        original images and masks")
+                        default="../../data/original_data/", help="path to \
+                        directory of original images and masks")
 
-    parser.add_argument("--saveDir", dest='saveDir', type=str, default="./",
+    # where and how to save samples & labels
+    parser.add_argument("--saveDir", dest='saveDir', type=str,
+                        default="../../data/training_data/",
                         help="path to directory to save sampling files")
+    parser.add_argument("--saveAsDict", dest='saveAsDict', default=False,
+                        action='store_true', help="save as dictionary in \
+                        pkl file (default class)")
+
+    # simple specifications for samples & debug mode
     parser.add_argument('--box', dest='box', type=int,
                         default=150, help="int n (150) for creating n x n pixel \
                         box")
@@ -86,6 +93,10 @@ def get_default_parser():
     parser.add_argument('--hwbox', dest='hwbox', type=int,
                         default=15, help="int n (15) for n x n pixel sub-box \
                          for labeling if HW or not; must be int factor of box")
+
+    parser.add_argument("--nproc", dest="nproc", type=int,
+                        default=mp.cpu_count() - 1, help="int for number of \
+                        processes to simultaneously run (machine - 1)")
 
     # hdf of saved data
     # fast save with just sampling handwriting
@@ -304,6 +315,11 @@ def random_crop(args, pid, img, mask=[]):
                 else:
                     holder["noHW_lab"].append([0])
 
+        if args.grid:
+            holder["pageid"].append([pid] * num_subs**2)
+        else:
+            holder["pageid"].append([pid])
+
         samples += 1
 
     return holder
@@ -335,7 +351,7 @@ def mp_sampler(zipped):
     # if more than one mask, path will be duplicated
     path = group["path"].unique()[0]
     # as data engineer's relative path may differ from user's
-    new_path = args.imgDir + path.split('data')[1]
+    new_path = args.imgDir + "/".join(path.split(os.sep)[-3:])
 
     # variable for if saving out random cropped images
     base = (os.path.normpath(new_path)).split(os.sep)[2]
@@ -372,7 +388,7 @@ def mp_sampler(zipped):
 
             # otherwise, handwritten element
             mask_path = el["mask"]
-            new_mask_path = args.imgDir + mask_path.split('data')[1]
+            new_mask_path = args.imgDir + "/".join(mask_path.split(os.sep)[-3:])
             mask = cv2.imread(new_mask_path, 0)
             if len(or_mask) < 1:
                 or_mask = mask
@@ -387,121 +403,22 @@ def mp_sampler(zipped):
     return dic
 
 
-def equalizer(args, date, HW, num_HW, noHW, num_noHW):
+def random_sampler(args):
     """
-    Equally select HW and noHW elements using num_HW
-    as sample size for each population
-
-    Parameters
-    ----------
-    args : argparse.ArgumentParser
-        argparser object specified in get_default_parser (& terminal)
-
-    date: str
-        date taken from path of HDF file containig tabulated data
-
-    HW : str
-        name of pickled file with HW elements from main()
-
-    num_HW : int
-        number of added HW elements; used for loading pkl file
-
-    noHW : str
-        name of pickled file with noHW elements from main()
-
-    num_noHW : int
-        number of added noHW elements; used for loading pkl file
-
-    Outputs
-    ----------
-    equalSamp*.pkl
-        pickled file with equal selection from random*.pkl
-        of cropped images with or without handwritten text;
-        need to randomly select from/shuffle as ordered data
-
-    """
-    pixels = []
-    labs = []
-    f = open(HW, "rb")
-    for it in range(1, num_HW):
-        print(it, num_HW)
-        pixels.extend(pkl.load(f))
-        labs.extend(pkl.load(f))
-
-    # how many samples of HW and noHW we want
-    limit = len(pixels)
-    labels = np.array(labs)
-    pixels = np.array(pixels)
-
-    # performing noHW selection in 5 groups with remainders ignored
-    # used to reduce load on memory
-    jt = 1
-    obj = []
-    obj_labs = []
-    g = open(noHW, "rb")
-    group_size = num_noHW // 5
-    sel_size = limit // 5
-
-    for page in range(1, num_noHW):
-        if jt < group_size and jt != num_noHW:
-            obj.extend(pkl.load(g))
-            obj_labs.extend(pkl.load(g))
-            jt += 1
-
-        if jt == group_size:
-            print("Processing %s objects; selecting %s" %
-                  (len(obj), sel_size))
-
-            # creatig numpy arrays for mask selection
-            np_objs = np.array(obj).copy()
-            np_objs_lab = np.array(obj_labs).copy()
-
-            rand_sel = np.random.randint(0, high=len(obj) - 1,
-                                         size=sel_size)
-            # selecting noHW objects
-            sel_noHW = np_objs[rand_sel]
-            sel_labs = np_objs_lab[rand_sel]
-
-            # appending to HW elems
-            pixels = np.append(pixels, sel_noHW, axis=0)
-            labels = np.append(labels, sel_labs, axis=0)
-
-            # starting over
-            jt = 1
-            obj = []
-            obj_labs = []
-
-    if len(pixels) == len(labels) and np.abs(len(pixels) - 2 * limit) < 4:
-        name = "%s/equalSamp_%s_%s.pkl" % (args.saveDir, date, limit)
-        h = open(name, 'wb')
-        pkl.dump(pixels, h)
-        pkl.dump(labels, h)
-        h.close()
-        print("Equalizer succeeded! File %s" % name)
-    else:
-        print("ERROR in equalizer()")
-
-    f.close()
-    g.close()
-
-
-def main(args):
-    """
-    Execute the multiprocessing of mp_sampler() and equalizer()
+    Sample randomly from pages listed in dataframe specified by
+    args.input[0]
 
     Parameters
     ----------
     args: argparser object specified in terminal command
 
-    Returns
+    Outputs
     ----------
-    random*.pkl:    pickled file with all the random samples;
-                    for ea. page, save list with all pixel maps & list
-                    with all labels
+    random*.txt: text file with # of pickled files
 
-    equalSamp*.pkl: pickled file with equal selection from random*.pkl
-                    of cropped images with or without handwritten text;
-                    need to randomly select from/shuffle as ordered data
+    random*.pkl:    pickled file with all the random samples;
+                   for ea. page, save list with all pixel maps & list
+                   with all labels
 
     """
 
@@ -510,15 +427,17 @@ def main(args):
     data = pd.read_hdf(hdf_path)
 
     # ensuring save directory exists
-    if not os.path.isdir(args.saveDir):
-        os.mkdir(args.saveDir)
+    if not os.path.isdir(args.saveDir + "/randomSamp/"):
+        os.makedirs(args.saveDir + "/randomSamp/")
 
     # creating files to save out random selections
     base = os.path.splitext(os.path.basename(hdf_path))[0]
-    filebase = "%s/random_%s_samp%s_box%s_side%s" % (args.saveDir, base,
-                                                     args.samples[0],
-                                                     args.box,
-                                                     args.side if not args.noSide else 0)
+    filebase = "%s/randomSamp/rand_%s_samp%s_box%s_side%s" % (args.saveDir, base,
+                                                              args.samples[
+                                                                  0],
+                                                              args.box,
+                                                              args.side if not args.noSide else 0)
+
     HW_file = "%s_HW.pkl" % (filebase)
     noHW_file = "%s_noHW.pkl" % (filebase)
 
@@ -532,7 +451,7 @@ def main(args):
     grouped = sel.groupby(["pageid", "path"], as_index=False)
 
     # save one local node for sanity
-    pool = mp.Pool(mp.cpu_count() - 1)
+    pool = mp.Pool(args.nproc)
     num_pages = 0
     num_pagesHW = 0
 
@@ -551,21 +470,155 @@ def main(args):
             dic = mp_sampler(result)
 
         if len(dic["noHW_lab"]) > 0:
-            pkl.dump(dic["noHW_img"], g_noHW)
-            pkl.dump(dic["noHW_lab"], g_noHW)
+            pkl.dump({"imgs": dic["noHW_img"], "labels": dic["noHW_lab"]},
+                     g_noHW)
             num_pages += 1
 
         if len(dic["HW_img"]) > 0:
-            pkl.dump(dic["HW_img"], f_HW)
-            pkl.dump(dic["HW_lab"], f_HW)
+            pkl.dump({"imgs": dic["HW_img"], "labels": dic["HW_lab"]},
+                     f_HW)
             num_pagesHW += 1
 
         if count % 10 == 0:
             print("%s pages processed" % count)
 
+    h = open(filebase + ".txt", "w")
+    h.write("%s, %s" % (num_pagesHW, num_pages))
+    h.close()
+
+    f_HW.close()
+    g_noHW.close()
+
+
+def equalizer(args):
+    """
+    Equally select HW and noHW elements using num_HW
+    as sample size for each population
+
+    Parameters
+    ----------
+    args : argparse.ArgumentParser
+        argparser object specified in get_default_parser (& terminal)
+
+    Outputs
+    ----------
+    equalSamp*.pkl
+        pickled file with equal selection from random*.pkl
+        of cropped images with or without handwritten text;
+        need to randomly select from/shuffle as ordered data
+
+    """
+
+    hdf_path = args.input[0]
+    base = os.path.splitext(os.path.basename(hdf_path))[0]
+    filebase = "%s/random_%s_samp%s_box%s_side%s" % (args.saveDir, base,
+                                                     args.samples[0],
+                                                     args.box,
+                                                     args.side if not args.noSide else 0)
+
+    if not os.path.isdir(args.saveDir + "/equalSamp/"):
+        os.makedir(args.saveDir + "/equalSamp/")
+
+    HW_file = "%s_HW.pkl" % (filebase)
+    noHW_file = "%s_noHW.pkl" % (filebase)
+    print(HW_file, noHW_file)
+
+    # f_HW = open(HW_file, "wb")
+    # g_noHW = open(noHW_file, "wb")
+    # pixels = []
+    # labs = []
+    # f = open(HW, "rb")
+    # for it in range(1, num_HW):
+    #     print(it, num_HW)
+    #     pixels.extend(pkl.load(f))
+    #     labs.extend(pkl.load(f))
+
+    # # how many samples of HW and noHW we want
+    # limit = len(pixels)
+    # labels = np.array(labs)
+    # pixels = np.array(pixels)
+
+    # # performing noHW selection in 5 groups with remainders ignored
+    # # used to reduce load on memory
+    # jt = 1
+    # obj = []
+    # obj_labs = []
+    # g = open(noHW, "rb")
+    # group_size = num_noHW // 5
+    # sel_size = limit // 5
+
+    # for page in range(1, num_noHW):
+    #     if jt < group_size and jt != num_noHW:
+    #         obj.extend(pkl.load(g))
+    #         obj_labs.extend(pkl.load(g))
+    #         jt += 1
+
+    #     if jt == group_size:
+    #         print("Processing %s objects; selecting %s" %
+    #               (len(obj), sel_size))
+
+    #         # creatig numpy arrays for mask selection
+    #         np_objs = np.array(obj).copy()
+    #         np_objs_lab = np.array(obj_labs).copy()
+
+    #         rand_sel = np.random.randint(0, high=len(obj) - 1,
+    #                                      size=sel_size)
+    #         # selecting noHW objects
+    #         sel_noHW = np_objs[rand_sel]
+    #         sel_labs = np_objs_lab[rand_sel]
+
+    #         # appending to HW elems
+    #         pixels = np.append(pixels, sel_noHW, axis=0)
+    #         labels = np.append(labels, sel_labs, axis=0)
+
+    #         # starting over
+    #         jt = 1
+    #         obj = []
+    #         obj_labs = []
+
+    # if len(pixels) == len(labels) and np.abs(len(pixels) - 2 * limit) < 4:
+    #     name = "%s/equalSamp_%s_%s.pkl" % (args.saveDir, date, limit)
+    #     h = open(name, 'wb')
+    #     pkl.dump(pixels, h)
+    #     pkl.dump(labels, h)
+    #     h.close()
+    #     print("Equalizer succeeded! File %s" % name)
+    # else:
+    #     print("ERROR in equalizer()")
+
+    # f.close()
+    # g.close()
+
+
+def main(args):
+    """
+    Execute the multiprocessing of random_sampler() and equalizer() in sequence,
+    over the specified HDF dataframe
+
+    Parameters
+    ----------
+    args: argparser object specified in terminal command
+
+    Outputs
+    ----------
+    random*.txt: text file with # of pickled files
+
+    random*.pkl:    pickled file with all the random samples;
+                    for ea. page, save list with all pixel maps & list
+                    with all labels
+
+
+    equalSamp*.pkl: pickled file with equal selection from random*.pkl
+                    of cropped images with or without handwritten text;
+                    need to randomly select from/shuffle as ordered data
+
+    """
+    # randomly select x samples from each page listed in the args HDF dataframe
+    random_sampler(args)
+
     # after running randomizer; re-process data to get roughly
     # equal number of HW and no HW n x n px images
-    equalizer(args, base, HW_file, num_pagesHW, noHW_file, num_pages)
+    # equalizer(args)
 
 
 if __name__ == '__main__':
