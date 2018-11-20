@@ -98,6 +98,11 @@ def get_default_parser():
                         default=mp.cpu_count() - 1, help="int for number of \
                         processes to simultaneously run (machine - 1)")
 
+    parser.add_argument("--mixFactor", dest="mixFactor", type=float,
+                        default=1., help="float to determine how many noHW \
+                        elements to select in data_mixer() given the limit\
+                        of the number of HW elements")
+
     # hdf of saved data
     # fast save with just sampling handwriting
 
@@ -490,10 +495,11 @@ def random_sampler(args):
     g_noHW.close()
 
 
-def equalizer(args):
+def data_mixer(args):
     """
-    Equally select HW and noHW elements using num_HW
-    as sample size for each population
+    Create mixed sample of HW and noHW, where number of HW samples is the
+    limiting factor multiplied by the args.mixFactor to determine the number
+    of noHW elements
 
     Parameters
     ----------
@@ -511,83 +517,91 @@ def equalizer(args):
 
     hdf_path = args.input[0]
     base = os.path.splitext(os.path.basename(hdf_path))[0]
-    filebase = "%s/random_%s_samp%s_box%s_side%s" % (args.saveDir, base,
-                                                     args.samples[0],
-                                                     args.box,
-                                                     args.side if not args.noSide else 0)
+    filebase = "%s/randomSamp/rand_%s_samp%s_box%s_side%s" % (args.saveDir, base,
+                                                              args.samples[0],
+                                                              args.box,
+                                                              args.side if not args.noSide else 0)
 
     if not os.path.isdir(args.saveDir + "/equalSamp/"):
         os.makedir(args.saveDir + "/equalSamp/")
 
-    HW_file = "%s_HW.pkl" % (filebase)
-    noHW_file = "%s_noHW.pkl" % (filebase)
-    print(HW_file, noHW_file)
+    num_HW, num_noHW = np.loadtxt("%s.txt" % (filebase), delimiter=",",
+                                  dtype=int)
 
-    # f_HW = open(HW_file, "wb")
-    # g_noHW = open(noHW_file, "wb")
-    # pixels = []
-    # labs = []
-    # f = open(HW, "rb")
-    # for it in range(1, num_HW):
-    #     print(it, num_HW)
-    #     pixels.extend(pkl.load(f))
-    #     labs.extend(pkl.load(f))
+    pixels = []
+    labs = []
+    f = open("%s_HW.pkl" % (filebase), "rb")
+    for it in range(num_HW):
+        page_dic = pkl.load(f)
+        pixels.extend(page_dic["imgs"])
+        labs.extend(page_dic["labels"])
 
-    # # how many samples of HW and noHW we want
-    # limit = len(pixels)
-    # labels = np.array(labs)
-    # pixels = np.array(pixels)
+    # how many samples of HW and noHW we want
+    limit = len(pixels)
+    np_labels = np.array(labs)
+    np_pixels = np.array(pixels)
 
-    # # performing noHW selection in 5 groups with remainders ignored
-    # # used to reduce load on memory
-    # jt = 1
-    # obj = []
-    # obj_labs = []
-    # g = open(noHW, "rb")
-    # group_size = num_noHW // 5
-    # sel_size = limit // 5
+    # number of noHW elements to select
+    noHW_limit = int(args.mixFactor * limit)
 
-    # for page in range(1, num_noHW):
-    #     if jt < group_size and jt != num_noHW:
-    #         obj.extend(pkl.load(g))
-    #         obj_labs.extend(pkl.load(g))
-    #         jt += 1
+    # performing noHW selection in 5 groups with remainders ignored
+    # used to reduce load on memory
+    pixels_noHW = []
+    labs_noHW = []
+    group_size = num_noHW // 5
+    sel_size = noHW_limit // 5
 
-    #     if jt == group_size:
-    #         print("Processing %s objects; selecting %s" %
-    #               (len(obj), sel_size))
+    g = open("%s_noHW.pkl" % (filebase), "rb")
+    jt = 1
+    for page in range(1, num_noHW):
+        if jt < group_size and jt != num_noHW:
+            pass
+            page_dic = pkl.load(g)
+            pixels_noHW.extend(page_dic["imgs"])
+            labs_noHW.extend(page_dic["labels"])
+            # obj.extend(pkl.load(g))
+            # obj_labs.extend(pkl.load(g))
+            jt += 1
 
-    #         # creatig numpy arrays for mask selection
-    #         np_objs = np.array(obj).copy()
-    #         np_objs_lab = np.array(obj_labs).copy()
+        if jt == group_size:
+            print("Processing %s objects; selecting %s" %
+                  (len(pixels_noHW), sel_size))
 
-    #         rand_sel = np.random.randint(0, high=len(obj) - 1,
-    #                                      size=sel_size)
-    #         # selecting noHW objects
-    #         sel_noHW = np_objs[rand_sel]
-    #         sel_labs = np_objs_lab[rand_sel]
+            # creating numpy arrays for mask selection
+            np_pixels_noHW = np.array(pixels_noHW).copy()
+            np_labs_noHW = np.array(labs_noHW).copy()
 
-    #         # appending to HW elems
-    #         pixels = np.append(pixels, sel_noHW, axis=0)
-    #         labels = np.append(labels, sel_labs, axis=0)
+            rand_sel = np.random.randint(0, high=len(pixels_noHW) - 1,
+                                         size=sel_size)
+            # selecting noHW objects
+            sel_noHW = np_pixels_noHW[rand_sel]
+            sel_labs = np_labs_noHW[rand_sel]
 
-    #         # starting over
-    #         jt = 1
-    #         obj = []
-    #         obj_labs = []
+            # appending to HW elems
+            np_pixels = np.append(np_pixels, sel_noHW, axis=0)
+            np_labels = np.append(np_labels, sel_labs, axis=0)
 
-    # if len(pixels) == len(labels) and np.abs(len(pixels) - 2 * limit) < 4:
-    #     name = "%s/equalSamp_%s_%s.pkl" % (args.saveDir, date, limit)
-    #     h = open(name, 'wb')
-    #     pkl.dump(pixels, h)
-    #     pkl.dump(labels, h)
-    #     h.close()
-    #     print("Equalizer succeeded! File %s" % name)
-    # else:
-    #     print("ERROR in equalizer()")
+            # start new sampling of no_HW elements
+            jt = 1
+            pixels_noHW = []
+            labs_noHW = []
 
-    # f.close()
-    # g.close()
+    if len(np_pixels) == len(np_labels):
+        name = "%s/equalSamp/eq_%s_HW%s_noHW%s_box%s_side%s.pkl" % (args.saveDir, base,
+                                                                    limit,
+                                                                    noHW_limit,
+                                                                    args.box,
+                                                                    args.side if not args.noSide else 0)
+        h = open(name, 'wb')
+        pkl.dump({"imgs": np_pixels, "labels": np_labels}, h)
+        h.close()
+
+        print("\ndata_mixer succeeded! \nFile %s" % name)
+    else:
+        print("ERROR in data_mixer()")
+
+    f.close()
+    g.close()
 
 
 def main(args):
@@ -613,12 +627,14 @@ def main(args):
                     need to randomly select from/shuffle as ordered data
 
     """
-    # randomly select x samples from each page listed in the args HDF dataframe
-    random_sampler(args)
 
-    # after running randomizer; re-process data to get roughly
-    # equal number of HW and no HW n x n px images
-    # equalizer(args)
+    # randomly select X n x n samples from each page listed in the args input
+    # HDF dataframe
+    # random_sampler(args)
+
+    # after running randomizer; re-process data to get roughly desired
+    # proportion of HW to no HW n x n px images given with args.mixFactor
+    data_mixer(args)
 
 
 if __name__ == '__main__':
