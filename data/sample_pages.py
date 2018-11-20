@@ -103,7 +103,7 @@ def get_default_parser():
                         elements to select in data_mixer() given the limit\
                         of the number of HW elements")
 
-    # hdf of saved data
+    # hdf of saved data for stats
     # fast save with just sampling handwriting
 
     # # selection criteria for samples
@@ -508,9 +508,9 @@ def data_mixer(args):
 
     Outputs
     ----------
-    equalSamp*.pkl
-        pickled file with equal selection from random*.pkl
-        of cropped images with or without handwritten text;
+    mix*.pkl
+        pickled file with specified selection from
+        random*.pkl of cropped images with or without handwritten text;
         need to randomly select from/shuffle as ordered data
 
     """
@@ -522,8 +522,8 @@ def data_mixer(args):
                                                               args.box,
                                                               args.side if not args.noSide else 0)
 
-    if not os.path.isdir(args.saveDir + "/equalSamp/"):
-        os.makedir(args.saveDir + "/equalSamp/")
+    if not os.path.isdir(args.saveDir + "/mixSamp/"):
+        os.makedirs(args.saveDir + "/mixSamp/")
 
     num_HW, num_noHW = np.loadtxt("%s.txt" % (filebase), delimiter=",",
                                   dtype=int)
@@ -544,12 +544,18 @@ def data_mixer(args):
     # number of noHW elements to select
     noHW_limit = int(args.mixFactor * limit)
 
-    # performing noHW selection in 5 groups with remainders ignored
+    # performing noHW selection groups with remainders ignored
     # used to reduce load on memory
     pixels_noHW = []
     labs_noHW = []
-    group_size = num_noHW // 5
-    sel_size = noHW_limit // 5
+
+    # rough way to determine number of groups for memory reduction
+    # assume all samples are noHW and takes into account pixel maps
+    # divisor determined through trial-and-error with 150 x 150 px image
+    mem_safety_factor = (
+        num_noHW * args.samples[0] * args.box**2) // (5000 * 150**2)
+    group_size = num_noHW // mem_safety_factor
+    sel_size = noHW_limit // mem_safety_factor
 
     g = open("%s_noHW.pkl" % (filebase), "rb")
     jt = 1
@@ -559,8 +565,6 @@ def data_mixer(args):
             page_dic = pkl.load(g)
             pixels_noHW.extend(page_dic["imgs"])
             labs_noHW.extend(page_dic["labels"])
-            # obj.extend(pkl.load(g))
-            # obj_labs.extend(pkl.load(g))
             jt += 1
 
         if jt == group_size:
@@ -587,11 +591,11 @@ def data_mixer(args):
             labs_noHW = []
 
     if len(np_pixels) == len(np_labels):
-        name = "%s/equalSamp/eq_%s_HW%s_noHW%s_box%s_side%s.pkl" % (args.saveDir, base,
-                                                                    limit,
-                                                                    noHW_limit,
-                                                                    args.box,
-                                                                    args.side if not args.noSide else 0)
+        name = "%s/mixSamp/mix_%s_HW%s_noHW%s_box%s_side%s.pkl" % (args.saveDir, base,
+                                                                   limit,
+                                                                   noHW_limit,
+                                                                   args.box,
+                                                                   args.side if not args.noSide else 0)
         h = open(name, 'wb')
         pkl.dump({"imgs": np_pixels, "labels": np_labels}, h)
         h.close()
@@ -606,8 +610,8 @@ def data_mixer(args):
 
 def main(args):
     """
-    Execute the multiprocessing of random_sampler() and equalizer() in sequence,
-    over the specified HDF dataframe
+    Execute the multiprocessing of random_sampler() and data_mixer() in
+    sequence, over the specified HDF dataframe
 
     Parameters
     ----------
@@ -615,14 +619,14 @@ def main(args):
 
     Outputs
     ----------
-    random*.txt: text file with # of pickled files
+    rand*.txt: text file with # of pickled files
 
-    random*.pkl:    pickled file with all the random samples;
+    rand*.pkl:    pickled file with all the random samples;
                     for ea. page, save list with all pixel maps & list
                     with all labels
 
 
-    equalSamp*.pkl: pickled file with equal selection from random*.pkl
+    mix*.pkl: pickled file with specified mixed selection from random*.pkl
                     of cropped images with or without handwritten text;
                     need to randomly select from/shuffle as ordered data
 
@@ -631,6 +635,7 @@ def main(args):
     # randomly select X n x n samples from each page listed in the args input
     # HDF dataframe
     # random_sampler(args)
+    print()
 
     # after running randomizer; re-process data to get roughly desired
     # proportion of HW to no HW n x n px images given with args.mixFactor
