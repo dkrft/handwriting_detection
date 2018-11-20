@@ -1,5 +1,32 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+
 """
-Sample pages listed in pandas dataframe. Intended for usage in the
+This script samples the pages listed in a pandas dataframe to generate
+pickled dictionaries for use in training a convolutional neural network (CNN)
+
+For successful usage, the dataframe must contain the following columns:
+    hwType, hasHW, pageid, path, and mask
+with values as described in about_hdf.md. [Files produced by handle_Labelbox.py
+and read_PRImA.py already meet these requirements.]
+
+For the optimization of the CNN, this script has been oufitted with a modular
+design and is easily adapted with several key arguments contained within a
+default dictionary (get_default_parser()).
+
+The main functions used within this script are:
+ * random_sampler() --- samples each page and separately saves images that
+    contain or do not contain handwritten elements in pickled dictionaries.
+    The dictionaries contain lists of the pixel maps and labels, as well
+    as other identifying information.
+
+ * data_mixer() --- generates a specific mix of samples that contain
+    handwriting or not. The files generated from the random_sampler() are
+    expected inputs.
+
+
+. Intended for usage in the
 terminal like:
 
 python sample_pages.py 250 ./labels/26-10.hdf
@@ -31,8 +58,31 @@ import numpy as np
 import os
 import pandas as pd
 import pickle as pkl
+from sklearn.model_selection import train_test_split
 
+
+# --- convenience functions ---
+# generate iterator
 items = lambda arg, df: [arg] * len(df)
+
+# used to get basename for filepath
+base = lambda path: os.path.splitext(os.path.basename(path))[0]
+
+# filepath/name  for random_sampler() files; reused by other functions
+rand_base = lambda args, base: "%s/randomSamp/rand_%s_samp%s_box%s_side%s" % \
+    (args.saveDir, base, args.samples[0], args.box,
+        args.side if not args.noSide else 0)
+
+# filepath/name for data_mixer() files; reused by other functions
+mix_base = lambda args, base, limit, noHW_limit: \
+    "%s/mixSamp/mix_%s_HW%s_noHW%s_box%s_side%s.pkl" % \
+    (args.saveDir, base, limit, noHW_limit, args.box,
+        args.side if not args.noSide else 0)
+
+# filepath/name for trainTest_set files; reused by other functions
+train_base = lambda args, base, tot: \
+    "%s/trainTest_%s_tot%s_box%s_side%s.pkl" % \
+    (args.saveDir, base, tot, args.box, args.side if not args.noSide else 0)
 
 
 def get_default_parser():
@@ -52,8 +102,9 @@ def get_default_parser():
     # requires a number of samples per page and HDF files with pages tabulated
     parser.add_argument('samples', metavar='S', type=int, nargs=1,
                         help='number of desired samples per page')
-    parser.add_argument('input', metavar='filename', type=str, nargs=1,
-                        help='name of full HDF (not hasHW)')
+    # allows multiple inputs
+    parser.add_argument('input', metavar='filename', type=str, nargs="+",
+                        help='list of full HDFs (not hasHW)')
 
     # assumes that soft-linked data directory is +1 outside of full git dir
     # so +2 ../../ outside of hwdetect/data
@@ -258,14 +309,10 @@ def random_crop(args, pid, img, mask=[]):
     ----------
     args : argparse.ArgumentParser
         argparser object specified in get_default_parser (& terminal)
-
     pid : int
         pageid for saving out img (if specified in args)
-
-
     img : nested list of int
         pixel map of cropped image; shape = (args.box, args.box, 3)
-
     mask : nested list of int
         pixel map of cropped mask; shape = (args.box, args.box, 1)
 
@@ -408,27 +455,32 @@ def mp_sampler(zipped):
     return dic
 
 
-def random_sampler(args):
+def random_sampler(args, hdf_path):
     """
-    Sample randomly from pages listed in dataframe specified by
-    args.input[0]
+    Sample randomly from pages listed in dataframe of hdf_path
 
     Parameters
     ----------
-    args: argparser object specified in terminal command
+    args : argparse.ArgumentParser
+        argparser object specified in get_default_parser (& terminal)
+    hdf_path : str
+        string with full or relative path to an HDF pandas dataframe
 
     Outputs
     ----------
-    random*.txt: text file with # of pickled files
+    random*.txt: text file
+        gives number of pickled elements contained in rand*HW.pkl and
+        rand*noHW.pkl
 
-    random*.pkl:    pickled file with all the random samples;
-                   for ea. page, save list with all pixel maps & list
-                   with all labels
+    random*.pkl: pickled dictionaries
+        contains dictionaries for all random samples created for ea. page,
+        dictionary keys includ "imgs" and "labels" which refer to lists with
+        all the pixel maps & with all the labels (0 = no handwriting,
+        1 = has handwriting), respectively
 
     """
 
     # reading in HDF of all labeled elements
-    hdf_path = args.input[0]
     data = pd.read_hdf(hdf_path)
 
     # ensuring save directory exists
@@ -436,12 +488,7 @@ def random_sampler(args):
         os.makedirs(args.saveDir + "/randomSamp/")
 
     # creating files to save out random selections
-    base = os.path.splitext(os.path.basename(hdf_path))[0]
-    filebase = "%s/randomSamp/rand_%s_samp%s_box%s_side%s" % (args.saveDir, base,
-                                                              args.samples[
-                                                                  0],
-                                                              args.box,
-                                                              args.side if not args.noSide else 0)
+    filebase = rand_base(args, base(hdf_path))
 
     HW_file = "%s_HW.pkl" % (filebase)
     noHW_file = "%s_noHW.pkl" % (filebase)
@@ -495,16 +542,18 @@ def random_sampler(args):
     g_noHW.close()
 
 
-def data_mixer(args):
+def data_mixer(args, hdf_path):
     """
-    Create mixed sample of HW and noHW, where number of HW samples is the
-    limiting factor multiplied by the args.mixFactor to determine the number
-    of noHW elements
+    Create mixed sample of samples with and without handwritten elements;
+    number of handwritten samples is the limiting factor multiplied by the
+    args.mixFactor to determine the number of samples without handwriting
 
     Parameters
     ----------
     args : argparse.ArgumentParser
         argparser object specified in get_default_parser (& terminal)
+    hdf_path : str
+        string with full or relative path to an HDF pandas dataframe
 
     Outputs
     ----------
@@ -515,12 +564,7 @@ def data_mixer(args):
 
     """
 
-    hdf_path = args.input[0]
-    base = os.path.splitext(os.path.basename(hdf_path))[0]
-    filebase = "%s/randomSamp/rand_%s_samp%s_box%s_side%s" % (args.saveDir, base,
-                                                              args.samples[0],
-                                                              args.box,
-                                                              args.side if not args.noSide else 0)
+    filebase = rand_base(args, base(hdf_path))
 
     if not os.path.isdir(args.saveDir + "/mixSamp/"):
         os.makedirs(args.saveDir + "/mixSamp/")
@@ -552,8 +596,9 @@ def data_mixer(args):
     # rough way to determine number of groups for memory reduction
     # assume all samples are noHW and takes into account pixel maps
     # divisor determined through trial-and-error with 150 x 150 px image
-    mem_safety_factor = (
-        num_noHW * args.samples[0] * args.box**2) // (5000 * 150**2)
+    mem_safety_factor = max(1, (num_noHW * args.samples[0] * args.box**2) //
+                            (5000 * 150**2))
+
     group_size = num_noHW // mem_safety_factor
     sel_size = noHW_limit // mem_safety_factor
 
@@ -561,7 +606,6 @@ def data_mixer(args):
     jt = 1
     for page in range(1, num_noHW):
         if jt < group_size and jt != num_noHW:
-            pass
             page_dic = pkl.load(g)
             pixels_noHW.extend(page_dic["imgs"])
             labs_noHW.extend(page_dic["labels"])
@@ -590,28 +634,73 @@ def data_mixer(args):
             pixels_noHW = []
             labs_noHW = []
 
+    name = mix_base(args, base(hdf_path), limit, noHW_limit)
     if len(np_pixels) == len(np_labels):
-        name = "%s/mixSamp/mix_%s_HW%s_noHW%s_box%s_side%s.pkl" % (args.saveDir, base,
-                                                                   limit,
-                                                                   noHW_limit,
-                                                                   args.box,
-                                                                   args.side if not args.noSide else 0)
         h = open(name, 'wb')
         pkl.dump({"imgs": np_pixels, "labels": np_labels}, h)
         h.close()
 
-        print("\ndata_mixer succeeded! \nFile %s" % name)
+        print("data_mixer succeeded! \nFile %s" % name)
+
     else:
         print("ERROR in data_mixer()")
 
     f.close()
     g.close()
+    return name, (limit + noHW_limit)
+
+
+def trainTest_set(filelist, savepath):
+    """
+    Prepare training and test data from one or more mixSamp or randomSamp files
+    that have been generated with sample_pages or contain a pickled dictionary
+    with the keys "imgs" and "labels"
+
+    Parameters
+    ----------
+    filelist : list
+        list of full or relative paths to mixSamp or randomSamp file(s)
+    savepath : str
+        path and name of pickled file to save with training and test data
+
+    Outputs
+    ----------
+    trainTest*.pkl
+        pickled dictionary with "x_train", "x_test", "y_train", "y_test";
+        randomized and shuffled data from filelist's files
+
+    """
+    pixels = []
+    labels = []
+    for file in filelist:
+        f = open(file, "rb")
+        data = pkl.load(f)
+        pixels.extend(data["imgs"])
+        labels.extend(data["labels"])
+        f.close()
+
+    x_train, x_test, y_train, y_test = train_test_split(pixels, labels, test_size=0.30,
+                                                        random_state=42)
+
+    f = open(savepath, "wb")
+    data_dic = {"x_train": x_train, "y_train": y_train,
+                "x_test": x_test, "y_test": y_test}
+    pkl.dump(data_dic, f)
+    f.close()
+    print("Training and testing data saved to: %s" % savepath)
 
 
 def main(args):
     """
-    Execute the multiprocessing of random_sampler() and data_mixer() in
-    sequence, over the specified HDF dataframe
+    Execute the functions sequentially in order to obtain a
+    training and test data set for a convolutional neural network:
+     1. randomly sample each page of a given file with:
+            random_sampler()
+     2. from files of random samples create balanced mixture
+        of samples with and without handwriting:
+            data_mixer()
+     3. from prepared mixtures prepare training and test data for CNN:
+        trainTest_sets()
 
     Parameters
     ----------
@@ -619,27 +708,46 @@ def main(args):
 
     Outputs
     ----------
-    rand*.txt: text file with # of pickled files
-
-    rand*.pkl:    pickled file with all the random samples;
-                    for ea. page, save list with all pixel maps & list
-                    with all labels
-
-
-    mix*.pkl: pickled file with specified mixed selection from random*.pkl
-                    of cropped images with or without handwritten text;
-                    need to randomly select from/shuffle as ordered data
+    rand*.txt: text file
+        with # of pickled files
+    rand*.pkl: pickled file
+        dictionaries for each page with all the random samples; for ea. page, 
+        save list with all pixel maps & list with all labels
+    mix*.pkl: pickled file
+        dictionary with specified mixed selection from random*.pkl
+        of cropped images with or without handwritten text; need to randomly
+        select from/shuffle as ordered data
+    trainTest*.pkl
+        pickled dictionary with "x_train", "x_test", "y_train", "y_test";
+        randomized and shuffled data from filelist's files
 
     """
 
-    # randomly select X n x n samples from each page listed in the args input
-    # HDF dataframe
-    # random_sampler(args)
-    print()
+    mixed_files = []
+    bases = []
+    vals = []
+    for file in args.input:
 
-    # after running randomizer; re-process data to get roughly desired
-    # proportion of HW to no HW n x n px images given with args.mixFactor
-    data_mixer(args)
+        # 1. if not existing, randomly select X n x n samples from each page
+        #    listed in the HDF dataframe
+        random = rand_base(args, base(file)) + ".txt"
+        if not os.path.isfile(random):
+            random_sampler(args, file)
+        else:
+            print("\nRandom selection of %s already exists" % file)
+
+        # 2. mix random samples with and without handwriting on a file basis
+        #   to obtain the desired proportion of samples
+        print("\nCreating mixed sample")
+        mix_file, val = data_mixer(args, file)
+        mixed_files.append(mix_file)
+        bases.append(base(file))
+        vals.append(val)
+
+    # 3. create training and test sets
+    print("\nCreating training and test set for CNN")
+    train_name = train_base(args, "_".join(bases), sum(vals))
+    trainTest_set(mixed_files, train_name)
 
 
 if __name__ == '__main__':
