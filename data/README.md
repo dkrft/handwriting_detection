@@ -11,10 +11,14 @@ and their masks; this is achieved with **sample_pages.py**. The resulting data i
 used to train the CNN.
 
 ### Installation
- * python 3.6.6
- * pandass
- * urllib
-
+ * python = 3.6.6
+ * opencv3 >= 3.1.0
+ * matplotlib >= 3.0.1
+ * numpy >= 1.15.4
+ * pandas >= 0.23.4
+ * seaborn >= 0.9.0
+ * sklearn >= 0.20.0
+ * urllib3 >= 1.24.1
 
 ### Obtain data from Dropbox
 The original images and their masks are collected by _dated folders_ (of form **DD-MM**) and each has the structure detailed in the table below. Masks are black and white PNGs created by Labelbox to indicate where an element of that type was indicated (white contours).
