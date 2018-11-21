@@ -1,0 +1,98 @@
+body {
+    margin: 0px;
+    font-family: sans;
+    overflow-y: scroll;
+}
+
+#header {
+    width: 100%;
+    background: #222;
+    padding: 16px 50px;
+    color: white;
+}
+
+a {
+    color: #bbb;
+    text-decoration: none;
+    padding-left: 20px;
+}
+
+a:hover {
+    color: white;
+}
+
+.cell {
+    width: 50%;
+    display: table-cell;
+}
+
+form {
+    width: auto;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 2px;
+    background: white;
+
+    /* cover the spinner */
+    position: relative;
+    z-index: 10;
+
+    /* for centering divs that shrink to the contents size*/
+    display: table;
+    margin: 20px 10px 0px auto;
+}
+
+#heatmap {
+    height: 80vh;
+    min-height: 500px;
+    margin: 20px auto 0px 10px;
+    transition: opacity 0.5s ease-in-out;
+    opacity: 0;
+}
+
+#main {
+    display: flex;
+    justify-content: center;
+}
+
+#spinner {
+    position: relative;
+    margin: 0px auto;
+    z-index: 0;
+    
+    /* style */
+    width: 50px;
+    height: 50px;
+    background: transparent;
+    border-radius: 100%;
+    border: 10px solid;
+    border-color: #00b4cb #82235c #7dd0b6 #1c4d8a;
+
+    /* animation */
+    animation-name: spin;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    transform: rotate(0deg);
+
+    /* transition*/
+    opacity: 0;
+    top: -60px;
+    transition: top 1s ease-out, opacity 1s ease-out;
+}
+
+#spinner_and_form_container {
+    display: table;
+
+    margin: 0px 0px 0px auto;
+}
+
+#spinner.active {
+    top: -40px;
+    opacity: 1;
+}
+
+@keyframes spin {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+}

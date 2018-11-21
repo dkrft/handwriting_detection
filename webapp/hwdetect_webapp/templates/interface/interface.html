@@ -1,0 +1,33 @@
+{% load static %}
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+        <meta name='description' content='Detect handwriting on predominantly machine-written page'>
+        <title>Detect handwriting</title>
+
+        <link rel='stylesheet' type='text/css' href='{% static "style.css" %}' />
+    </head>
+    <body>
+        <div id='header'>
+            Handwriting Detection Web Application
+            <a id='github_link' href='https://github.com/dkrft/handwriting_detection/'>GitHub</a>
+        </div>
+        <div id='main'>
+            <div class='cell'>
+                <div id='spinner_and_form_container'>
+                    <form id='form' action='' method='post' enctype='multipart/form-data'>
+                        {% csrf_token %}
+                        <p><input id='image' type='file' name='image'></p>
+                        <p><input type='submit' value='Submit'></p>
+                    </form>
+                    <div id='spinner'></div>
+                </div>
+            </div>
+            <div class='cell'>
+                <img id='heatmap' src='{{ base64heatmap }}'>
+            </div>
+        </div>
+        <script src='{% static "script.js" %}'></script>
+    </body>
+</html>
