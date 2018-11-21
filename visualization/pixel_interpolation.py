@@ -15,15 +15,39 @@ class Interpolator:
     """A template for interpolator objects."""
 
     def __init__(self):
-        """Create a nearest neighbour interpolator."""
+        """Create an interpolator."""
         pass
 
     def fit(self, samples):
-        """Load the samples that are used for interpolation."""
+        """Load the samples that are used for interpolation.
+
+        Parameters
+        ----------
+        samples : dict mapping tuple of int to float
+            A dictionary containing the samples that are used for interpolation. The keys of the dictionary correspond
+            to the positions of the samples while values of the dictionary correspond to the color of the pixel. The
+            positions must be encoded as a tuple of integers where the first integer denotes the y-coordinate and the
+            second integer denotes the x-coordinate.
+        """
         pass
 
     def interpolate(self, y, x):
-        """Interpolate the color of a pixel at the specified coordinates."""
+        """Interpolate the color of a pixel at the specified coordinates.
+
+        Parameters
+        ----------
+        y : int
+            Y-coordinate of the pixel that is interpolated.
+        x: int
+            X-coordinate of the pixel that is interpolated.
+
+        Returns
+        -------
+        float
+            An interpolation of the color at the specified coordinates based on a randomly drawn float. Note that the
+            purpose of this implementation is to serve as a template for sub classes. In particular, it does not provide
+            a sensible interpolation of the color of a pixel.
+        """
         return np.random.rand()
 
 
@@ -56,7 +80,7 @@ class NearestNeighbourInterpolator(Interpolator):
 
         Parameters
         ----------
-        samples : dict mapping a tuples of int to float
+        samples : dict mapping tuple of int to float
             A dictionary containing the samples that are used for interpolation. The keys of the dictionary correspond
             to the positions of the samples while values of the dictionary correspond to the color of the pixel. The
             positions must be encoded as a tuple of integers where the first integer denotes the y-coordinate and the
@@ -80,7 +104,7 @@ class NearestNeighbourInterpolator(Interpolator):
         Returns
         -------
         float
-            The interpolated color of the pixel at the specified coordinates.
+            An interpolation of the color at the specified coordinates based on the color of the closest samples.
         """
 
         # get he indices of the samples closest to the specified position

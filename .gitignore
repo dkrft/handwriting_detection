@@ -1,3 +1,5 @@
+.idea/*
+
 # environments
 .env
 .venv

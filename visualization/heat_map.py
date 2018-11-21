@@ -55,11 +55,12 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 from visualization.pixel_interpolation import NearestNeighbourInterpolator
+from visualization.sampling import RandomGridSampler
 
 
 def create_heat_map(image, predictor,
-                    sample_frequency=1000,
                     label_aggregator=lambda labels: labels[0],
+                    sampler=RandomGridSampler(),
                     preprocessors=[],
                     interpolator=NearestNeighbourInterpolator(),
                     heat_map_resolution=10):
@@ -71,21 +72,26 @@ def create_heat_map(image, predictor,
         The image for which the heat map is created
     predictor : neural_network.predictor.Predictor
         The predictor object that is used for predicting the heat map.
-    sample_frequency : int, optional
-        The frequency with which samples are taken from the image for making predictions. For instance, a sample
-        frequency of 1000 corresponds to 1 sample per 1000 pixels of the input image.
-    label_aggregator : function from list of floats to float
-        The function that is used to combine the labels predicted by the predictor into a single label. By default,
+    label_aggregator : function from list of floats to float, optional
+        The function that is used for combining the labels predicted by the predictor into a single label. By default,
         only the first label is used.
+    sampler : class implementing visualization.pixel_interpolation.RandomSampler
+        The sampler that is used for drawing samples from the image and predicting their labels.
     preprocessors : list of functions from np.array to np.array
         A list of the image processing functions that are applied to the original image before starting the sampling and
         prediction phase. The preprocessors are applied in the order of the list.
-    interpolator : subclass of visualization.pixel_interpolation.Interpolator
+    interpolator : class implementing visualization.pixel_interpolation.Interpolator
         The interpolator that is used to infer the pixels of the heat map based on the predictions made in the sampling
         and prediction phase.
     heat_map_resolution : int
         The resolution of the heat map. For instance, a resolution of 5 implies that squares of 5 by 5 pixels in the
         original image are condensed into 1 pixel in the heat map.
+
+    Returns
+    -------
+    np.array
+        A two dimensional array representing the heat map. Note that the height and width of the array matches the
+        height and width of the original image scaled down by the heat map resolution parameter.
     """
 
     # set up the heat map
@@ -98,28 +104,8 @@ def create_heat_map(image, predictor,
         image = preprocessor(image)
     print('pre-processing complete')
 
-    # pad image
-    sample_size = predictor.get_image_size()
-    border = sample_size // 2
-    padded_img = np.pad(image, ((border, border + 1), (border, border + 1), (0, 0)), 'edge')
-
-    # draw random sample coordinates without replacement
-    coordinates = np.random.choice(height * width, (height * width) // sample_frequency, replace=False)
-
     # make predictions
-    progress = 0
-    step_size = len(coordinates) // 10
-    predictions = {}
-    for i in range(0, len(coordinates)):
-        # print progress
-        if step_size > 0 and i % step_size == 0:
-            print("{}% of predictions complete".format(progress))
-            progress += 10
-
-        # make prediction and add to the sample dictionary
-        y = coordinates[i] // width
-        x = coordinates[i] % width
-        predictions[(y, x)] = label_aggregator(predictor.predict([padded_img[y:y + sample_size, x:x + sample_size]])[0])
+    predictions = sampler.sample(image, predictor, label_aggregator)
 
     # pass predictions to the interpolator
     interpolator.fit(predictions)
