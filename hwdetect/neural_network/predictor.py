@@ -52,12 +52,13 @@ __version__ = "1.0"
 import tensorflow as tf
 import math
 from hwdetect.neural_network import model
+from hwdetect.utils import get_path
 
 
 class Predictor:
     """An object to predict the labels of an image based on a pre-trained neural network model."""
 
-    def __init__(self, model_directory, model_iteration='last'):
+    def __init__(self, model_directory=None, model_iteration='last'):
         """Create a predictor based on specified neural network.
 
         Parameters
@@ -65,10 +66,16 @@ class Predictor:
         model_directory : string
             The path to the directory of the neural network model that is going to be used for making predictions. The
             path must be defined in absolute terms.
+
+            If None, will default to hwdetect/neural_network/trained_models
+
         model_iteration : {int, string}, optional
             The training iteration that is going to be used for making predictions. If the string ``last`` is passed
             as an argument, the most recent iteration saved in the file system is used.
         """
+
+        if model_directory is None:
+            model_directory = get_path('hwdetect/neural_network/trained_models/')
 
         # keep model directory
         self.model_directory = model_directory
