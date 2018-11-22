@@ -14,9 +14,6 @@ def create_heatmap_placeholder(img):
     # do some funky stuff to be able to show something
     # on the frontend for now without struggling with the
     # old hwdetect interface
-    a = img[:,:,1]
-    img[:,:,1] = img[:,:,2]
-    img[:,:,2] = a
     heatmap = img
 
     # simulate delay
@@ -51,13 +48,13 @@ def process_picture(request):
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
         heatmap = create_heatmap_placeholder(img)
-        html_base64 = numpy_to_png_base64(heatmap)
+        html_base64 = numpy_to_img_base64(heatmap)
  
         context['base64heatmap'] = html_base64
 
     else:
         # show one white pixel in case no image was uploaded
-        html_base64 = numpy_to_png_base64(np.array([[[255,255,255]]]))
+        html_base64 = numpy_to_img_base64(np.array([[[255,255,255]]]))
         context['base64heatmap'] = html_base64
 
 
