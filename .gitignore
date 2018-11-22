@@ -13,7 +13,7 @@ venv.bak/
 data/data_sets/*
 
 # trained models
-neural_network/trained_models/*
+hwdetect/neural_network/trained_models/*
 
 # main module used for testing
 main.py
