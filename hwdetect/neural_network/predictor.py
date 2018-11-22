@@ -51,7 +51,7 @@ __version__ = "1.0"
 
 import tensorflow as tf
 import math
-from neural_network import model
+from hwdetect.neural_network import model
 
 
 class Predictor:

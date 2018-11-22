@@ -1,0 +1,1 @@
+from hwdetect.postprocessor.boundingbox import boundingbox

@@ -98,7 +98,8 @@ def create(
         it should lead to an empty directory. If the specified directory does not exist in the file system already, a
         new directory is created.
     image_size : int
-        The width and height of the images accepted by the neural network.
+        The width and height of the images accepted by the neural network. The sampler will read this value in order
+        to sample from the input image.
     image_channels : int
         The number of channels of the images accepted by the neural network.
     label_size : int

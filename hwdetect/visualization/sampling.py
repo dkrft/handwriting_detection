@@ -42,6 +42,9 @@ class RandomSampler(Sampler):
     def __init__(self, sample_frequency=1000):
         """Create a sampler that draws samples at random.
 
+        no need to supply width and height of the samples, as this
+        value is provided by the model.
+
         Parameters
         ----------
         sample_frequency : int, optional
@@ -111,6 +114,9 @@ class RandomGridSampler(Sampler):
     def __init__(self, grid_frequency=25, sample_frequency=1000):
         """Create a sampler that draws samples evenly at random within a predefined grid.
 
+        no need to supply width and height of the samples, as this
+        value is provided by the model.
+        
         Parameters
         ----------
         grid_frequency : int, optional

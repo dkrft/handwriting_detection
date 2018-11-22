@@ -1,0 +1,3 @@
+def stride(img):
+    chunk = img[:150, :150, :]
+    return [chunk] #chunk2, chunk3, ...
