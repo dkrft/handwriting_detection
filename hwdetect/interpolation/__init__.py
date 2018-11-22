@@ -1,0 +1,1 @@
+from hwdetect.interpolation.nearest_neighbour import NearestNeighbour

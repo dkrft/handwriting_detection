@@ -1,1 +1,1 @@
-from hwdetect.postprocessor.boundingbox import boundingbox
+# from hwdetect.postprocessor.example import Example

@@ -1,2 +1,2 @@
-from hwdetect.sampler.random import random
-from hwdetect.sampler.stride import stride
+from hwdetect.sampler.random import Random
+from hwdetect.sampler.random_grid import RandomGrid
