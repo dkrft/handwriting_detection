@@ -9,12 +9,13 @@ body {
     background: #222;
     padding: 16px 50px;
     color: white;
+    box-sizing: border-box;
 }
 
 a {
     color: #bbb;
     text-decoration: none;
-    padding-left: 20px;
+    padding-left: 1.464vw;
 }
 
 a:hover {
@@ -28,7 +29,7 @@ a:hover {
 
 form {
     width: auto;
-    padding: 20px;
+    padding: 1.464vw;
     border: 1px solid #eee;
     border-radius: 2px;
     background: white;
@@ -39,13 +40,13 @@ form {
 
     /* for centering divs that shrink to the contents size*/
     display: table;
-    margin: 20px 10px 0px auto;
+    margin: 1.464vw 0.732vw 0px auto;
 }
 
 #heatmap {
-    height: 80vh;
-    min-height: 500px;
-    margin: 20px auto 0px 10px;
+    max-height: 80vh;
+    height: 100%;
+    margin: 1.464vw auto 0px 0.732vw;
     transition: opacity 0.5s ease-in-out;
     opacity: 0;
 }

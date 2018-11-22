@@ -165,7 +165,7 @@ class Bandpass(Preprocessor):
 
 
 
-    def bandpass_image(self, img, m, verbose=False):
+    def bandpass_image(self, img, m, t, verbose=False):
 
         # https://scipy-cookbook.readthedocs.io/items/ButterworthBandpass.html
 
@@ -258,7 +258,7 @@ class Bandpass(Preprocessor):
 
 
         # try to find frequencies:
-        filtered, lower_threshold, upper_threshold = self.bandpass_image(img, m)
+        filtered, lower_threshold, upper_threshold = self.bandpass_image(img, m, t)
 
 
         # print(lower_threshold, upper_threshold)

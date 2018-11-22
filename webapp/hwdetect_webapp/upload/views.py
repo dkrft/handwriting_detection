@@ -7,17 +7,30 @@ import numpy as np
 import cv2
 import base64
 
-import time
+# our module
+import hwdetect
+
+from hwdetect.utils import show
 
 
-def create_heatmap_placeholder(img):
-    # do some funky stuff to be able to show something
-    # on the frontend for now without struggling with the
-    # old hwdetect interface
-    heatmap = img
+def create_heat_map(img):
 
-    # simulate delay
-    time.sleep(2)
+    heatmap = hwdetect.create_heat_map(img,
+            preprocessors=[hwdetect.preprocessor.Threshold(), hwdetect.preprocessor.Bandpass()],
+            sampler=hwdetect.sampler.RandomGrid(),
+            predictor=hwdetect.neural_network.Predictor(),
+            interpolator=hwdetect.interpolation.NearestNeighbour())
+
+    # make sure it's 3 channel
+    if len(heatmap.shape) == 2:
+        heatmap = np.concatenate((heatmap[:,:,None],
+                                  heatmap[:,:,None],
+                                  heatmap[:,:,None]), axis=2)
+
+    # and between 0 and 255 with dtype utint8
+    if heatmap.max() <= 1:
+        heatmap *= 255
+    heatmap = heatmap.astype(np.uint8)
 
     return heatmap
 
@@ -47,7 +60,11 @@ def process_picture(request):
         file_bytes = np.asarray(bytearray(img_bytesio.read()), dtype=np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        heatmap = create_heatmap_placeholder(img)
+        heatmap = create_heat_map(img)
+
+        print('hmp:', heatmap.shape, heatmap.min(), heatmap.max(), heatmap.dtype)
+        print('img:', img.shape, img.min(), img.max(), img.dtype)
+
         html_base64 = numpy_to_img_base64(heatmap)
  
         context['base64heatmap'] = html_base64

@@ -68,14 +68,15 @@ On how to train, see the jupyter-notebook *examples/hwdetect_example.ipynb*
 **Data**
 
 Training data can be obtained here:
+
 https://www.dropbox.com/sh/rs7cg4x3q6gx1kx/AAAvdm097o6C3GPitm5SeHYPa?dl=0
 
-You can put it anywhere you like, or put it into the modules path into
-hwdetect/data/data_sets/, for example:
+You can put those two folders anywhere you like, or put it into the modules
+path into hwdetect/data/data_sets/, for example:
 
 `/usr/lib/python3.7/site-packages/hwdetect/data/data_sets/`
 
-Create the subfolder *trained_models/* if it doesn't exist. You can figure the path to the
+Create the subfolder *data_sets/* if it doesn't exist. You can figure the path to the
 module out using the following command in a terminal:
 
 `python -c "import hwdetect; print(hwdetect.__file__)`
