@@ -14,8 +14,7 @@ hwdetect/data/data_sets/*
 
 # trained models
 hwdetect/neural_network/trained_models/*
-hwdetect/examples/trained_example_models/*
-
+examples/trained_example_models/*
 # main module used for testing
 main.py
 
