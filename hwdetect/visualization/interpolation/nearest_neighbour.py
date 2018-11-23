@@ -9,7 +9,7 @@ __version__ = "1.0"
 
 import numpy as np
 import scipy as sp
-from hwdetect.interpolation.interpolator import Interpolator
+from .interpolator import Interpolator
 
 
 class NearestNeighbour(Interpolator):

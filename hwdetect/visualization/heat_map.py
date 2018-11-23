@@ -54,8 +54,8 @@ __version__ = "1.0"
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
-from hwdetect.interpolation import NearestNeighbour
-from hwdetect.sampler import RandomGrid
+from .interpolation import NearestNeighbour
+from .sampler import RandomGrid
 
 
 def create_heat_map(image, predictor,
