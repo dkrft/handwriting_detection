@@ -9,6 +9,7 @@ __version__ = "1.0"
 
 import numpy as np
 from .sampler import Sampler
+from hwdetect.utils import show
 
 
 class Random(Sampler):
@@ -75,7 +76,10 @@ class Random(Sampler):
             # make prediction and add to the sample dictionary
             y = coordinates[i] // width
             x = coordinates[i] % width
-            predictions[(y, x)] = label_aggregator(
-                predictor.predict([padded_img[y:y + sample_size, x:x + sample_size]])[0])
+            chunk = [padded_img[y:y + sample_size, x:x + sample_size]]
+            if chunk[0].mean() < 250:
+                predictions[(y, x)] = label_aggregator(predictor.predict(chunk)[0])
+            else:
+                predictions[(y, x)] = 0
 
         return predictions

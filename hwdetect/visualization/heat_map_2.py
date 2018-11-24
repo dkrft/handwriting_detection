@@ -56,14 +56,18 @@ import cv2
 from matplotlib import pyplot as plt
 from .interpolation import NearestNeighbour
 from .sampler import RandomGrid
+from scipy.spatial.distance import cdist
+from hwdetect.utils import show
+from sklearn.neighbors import KNeighborsRegressor
+import time
 
 
-def create_heat_map(image, predictor,
+def create_heat_map_2(image, predictor,
                     label_aggregator=lambda labels: labels[0],
                     sampler=RandomGrid(),
                     preprocessors=[],
                     interpolator=NearestNeighbour(),
-                    heat_map_resolution=10):
+                    heat_map_scale=10):
     """Create a heat map of an image based on the predictions made by the specified neural network model.
 
     Parameters
@@ -83,7 +87,7 @@ def create_heat_map(image, predictor,
     interpolator : class implementing visualization.pixel_interpolation.Interpolator
         The interpolator that is used to infer the pixels of the heat map based on the predictions made in the sampling
         and prediction phase.
-    heat_map_resolution : int
+    heat_map_scale : int
         The resolution of the heat map. For instance, a resolution of 5 implies that squares of 5 by 5 pixels in the
         original image are condensed into 1 pixel in the heat map.
 
@@ -97,7 +101,7 @@ def create_heat_map(image, predictor,
     # set up the heat map
     height = image.shape[0]
     width = image.shape[1]
-    heat_map = np.zeros((height // heat_map_resolution, width // heat_map_resolution))
+    heat_map = np.zeros((height // heat_map_scale, width // heat_map_scale))
 
     # pre-process image
     for preprocessor in preprocessors:
@@ -107,23 +111,22 @@ def create_heat_map(image, predictor,
     # make predictions
     predictions = sampler.sample(image, predictor, label_aggregator)
 
-    # pass predictions to the interpolator
-    interpolator.fit([k for k in predictions], [predictions[k] for k in predictions])
+    X_pred = [k for k in predictions]
+    Y_pred = [predictions[k] for k in predictions]
+    interpolator.fit(X_pred, Y_pred) 
 
-    # interpolate missing predictions
-    progress = 0
-    step_size = ((width // heat_map_resolution) * (height // heat_map_resolution)) // 10
-    i = 0
-    for x in range(width // heat_map_resolution):
-        for y in range(height // heat_map_resolution):
-            # print progress
-            if step_size > 0 and i % step_size == 0:
-                print("{}% of heat map complete".format(progress))
-                progress += 10
-            i += 1
+    # create grid for all the coordinates in the heatmap
+    # [0] is height, [1] is width
+    Y, X = np.mgrid[:heat_map.shape[0], :heat_map.shape[1]]
+    coords = [a for a in zip(Y.flatten(), X.flatten())]
+    coords_scaled = np.array([a for a in zip(Y.flatten(), X.flatten())])*heat_map_scale
 
-            # make interpolation
-            heat_map[y, x] = interpolator.predict([(y * heat_map_resolution, x * heat_map_resolution)])[0]
+    print('interpolating...')
+    values = interpolator.predict(coords_scaled)
+
+    heat_map = values.reshape(heat_map.shape)
+
+    print('done')
 
     return heat_map
 

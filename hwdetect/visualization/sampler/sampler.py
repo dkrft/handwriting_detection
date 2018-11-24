@@ -31,4 +31,5 @@ class Sampler:
             An empty dictionary containing the sampled predictions. Note that the purpose of this implementation is to
             serve as a template. In particular, it does not provide a sensible collection of predictions.
         """
+        raise NotImplementedError()
         return {}
