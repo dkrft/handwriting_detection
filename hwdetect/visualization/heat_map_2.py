@@ -116,11 +116,10 @@ def create_heat_map_2(image, predictor,
     Y_pred = [predictions[k] for k in predictions]
     interpolator.fit(X_pred, Y_pred) 
 
-    # create grid for all the coordinates in the heatmap
+    # create list of tuples (y, x) for all the coordinates in the heatmap
     # [0] is height, [1] is width
-    Y, X = np.mgrid[:heat_map.shape[0], :heat_map.shape[1]]
-    coords = [a for a in zip(Y.flatten(), X.flatten())]
-    coords_scaled = np.array([a for a in zip(Y.flatten(), X.flatten())])*heat_map_scale
+    coords = np.concatenate(np.dstack(np.mgrid[:heat_map.shape[0], :heat_map.shape[1]]))
+    coords_scaled = coords*heat_map_scale
 
     print('interpolating...')
     values = interpolator.predict(coords_scaled)
