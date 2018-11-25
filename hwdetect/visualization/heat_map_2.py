@@ -63,11 +63,11 @@ import time
 
 
 def create_heat_map_2(image, predictor,
-                    label_aggregator=lambda labels: labels[0],
-                    sampler=RandomGrid(),
-                    preprocessors=[],
-                    interpolator=NearestNeighbour(),
-                    heat_map_scale=10):
+                      label_aggregator=lambda labels: labels[0],
+                      sampler=RandomGrid(),
+                      preprocessors=[],
+                      interpolator=NearestNeighbour(),
+                      heat_map_scale=10):
     """Create a heat map of an image based on the predictions made by the specified neural network model.
 
     Parameters
@@ -104,6 +104,7 @@ def create_heat_map_2(image, predictor,
     heat_map = np.zeros((height // heat_map_scale, width // heat_map_scale))
 
     # pre-process image
+    print('preprocessing...')
     for preprocessor in preprocessors:
         image = preprocessor.preprocess(image)
     print('pre-processing complete')

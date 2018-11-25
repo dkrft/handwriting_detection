@@ -12,7 +12,7 @@ class Stride(Sampler):
         ----------
         stride : int, optional
             by how much to slide the window in x and y direction each step.
-            If None, will take 2/3 of the predictors sample size.
+            If None, will take 1/3 of the predictors sample size.
         y_random : float, optional
             percent of the predictors sample size to randomly vary in y
             direction between - and + y_random. Default: 0.1
@@ -50,7 +50,7 @@ class Stride(Sampler):
         sample_size = predictor.get_image_size()
 
         if stride is None:
-            stride = sample_size*2//3
+            stride = sample_size//3
             
         # pad image
         """# shorthands:

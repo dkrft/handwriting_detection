@@ -98,3 +98,6 @@ into lines, deskewing of individual lines might be relatively trivial,
 just figure out the 4 edges of the lines as it was a rectangle and from
 there calculate the skew angle. So this would make the bandpass preprocessor
 perform better.
+- try to make interpolation by GaussianMixture and NeuralNetwork Regression work,
+that will not make that much of a difference though, just for the sake of learning
+new things. 
