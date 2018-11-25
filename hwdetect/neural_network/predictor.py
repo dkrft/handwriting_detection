@@ -58,7 +58,7 @@ from hwdetect.utils import get_path
 class Predictor:
     """An object to predict the labels of an image based on a pre-trained neural network model."""
 
-    def __init__(self, model_directory=None, model_iteration='last'):
+    def __init__(self, model_directory=None, model_iteration='last', gpu=0):
         """Create a predictor based on specified neural network.
 
         Parameters
@@ -68,14 +68,21 @@ class Predictor:
             path must be defined in absolute terms.
 
             If None, will default to hwdetect/neural_network/trained_models
-
         model_iteration : {int, string}, optional
             The training iteration that is going to be used for making predictions. If the string ``last`` is passed
             as an argument, the most recent iteration saved in the file system is used.
+        gpu : integer, optional
+            set to 1, if it should use the gpu. Hopefully it works
+            default: 0
         """
 
         if model_directory is None:
-            model_directory = get_path('hwdetect/neural_network/trained_models/')
+            model_directory = get_path('hwdetect/neural_network/trained_models/', as_Path=True)
+
+        if not model_directory.exists():
+            raise ValueError('specified path {} does not exist'.format(model_directory))
+
+        model_directory = str(model_directory)
 
         # keep model directory
         self.model_directory = model_directory
@@ -88,7 +95,8 @@ class Predictor:
                 model_iteration = max(model.get_recorded_iterations(model_directory, saved_only=True))
 
             # create session
-            self.session = tf.Session()
+            config = tf.ConfigProto(device_count={'GPU': gpu})
+            self.session = tf.Session(config=config)
 
             # load model from file
             loader = tf.train.import_meta_graph(model_directory + '/model-0.meta')

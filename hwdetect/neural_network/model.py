@@ -119,6 +119,7 @@ def create(
     # create the computational graph
     graph = tf.Graph()
     with graph.as_default():
+    # with tf.device('/device:XLA_GPU:0'):
 
         # create input templates
         x = tf.placeholder(tf.float32, shape=[None, image_size, image_size, image_channels], name='x')

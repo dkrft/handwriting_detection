@@ -12,14 +12,15 @@ from hwdetect.utils import show
 # model from our repository
 
 img = cv2.imread('example_data/medium1.jpg')
-
+if img is None:
+    img = cv2.imread('examples/example_data/medium1.jpg')
 
 start = time.time()
 
 heatmap = hwdetect.visualization.create_heat_map_2(img,
             preprocessors=[hwdetect.preprocessor.Threshold(), hwdetect.preprocessor.Bandpass()],
-            sampler=hwdetect.visualization.sampler.Stride(),
-            predictor=hwdetect.neural_network.Predictor(),
+            sampler=hwdetect.visualization.sampler.Stride(stride=10),
+            predictor=hwdetect.neural_network.Predictor(gpu=1),
             interpolator=KNeighborsRegressor())
 
 print(round(time.time() - start, 3), 'Seconds')

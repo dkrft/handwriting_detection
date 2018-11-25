@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_path(*paths):
+def get_path(*paths, as_Path=False):
     """
     TODO still being used? what about the default trained model,
     I think we need this to properly access the one stored in our repo
@@ -21,7 +21,10 @@ def get_path(*paths):
         onto the modules path.
         Subdirectories or files relative to the module
     """
-    return str(Path(__file__).absolute().parent.parent.joinpath(*paths))
+    if as_Path:
+        return Path(__file__).absolute().parent.parent.joinpath(*paths)
+    else:
+        return str(Path(__file__).absolute().parent.parent.joinpath(*paths))
     
 
 def show(img, heat_map=None):

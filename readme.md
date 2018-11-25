@@ -41,6 +41,27 @@ manjaro:
 sudo pacman -S python-tensorflow # works for python 3.7
 ```
 
+## gpu
+
+**installation**
+
+```bash
+sudo pacman -S python-tensorflow-cuda
+```
+
+and reboot
+
+**usage**
+
+```python
+# run on gpu:
+hwdetect.neural_network.Predictor(gpu=1)
+
+# run on cpu:
+hwdetect.neural_network.Predictor() # or gpu=0
+```
+
+more info: how_to_gpu.md
 
 ## Pretrained Models
 
