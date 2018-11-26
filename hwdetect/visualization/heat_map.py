@@ -118,12 +118,13 @@ def create_heat_map(image, predictor,
 
     X_pred = [k for k in predictions]
     Y_pred = [predictions[k] for k in predictions]
-    interpolator.fit(X_pred, Y_pred) 
+    interpolator.fit(X_pred, Y_pred)
 
     # create list of tuples (y, x) for all the coordinates in the heatmap
     # [0] is height, [1] is width
-    coords = np.concatenate(np.dstack(np.mgrid[:heat_map.shape[0], :heat_map.shape[1]]))
-    coords_scaled = coords*heat_map_scale
+    coords = np.concatenate(
+        np.dstack(np.mgrid[:heat_map.shape[0], :heat_map.shape[1]]))
+    coords_scaled = coords * heat_map_scale
 
     print('interpolating...')
     values = interpolator.predict(coords_scaled)
@@ -135,8 +136,28 @@ def create_heat_map(image, predictor,
     return heat_map
 
 
-def plot_heat_map(image, heat_map):
-    """Overlay an image with the specified heat map and plot the result.
+def heat_map_to_img(heat_map):
+    """Convert percentages from heat_map to a grayscale image
+
+    Parameters
+    ----------
+    heat_map : np.array
+        The heat map of an image.
+
+    Returns
+    ----------
+    gray : np.array
+        The grayscale image of the heat map.
+
+    """
+    if heat_map.max() <= 1:
+        heat_map *= 255
+    heat_map = heat_map.astype(np.uint8)
+    return heat_map
+
+
+def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.85):
+    """Create image with bounding boxes or contours using the heat map
 
     Parameters
     ----------
@@ -144,13 +165,90 @@ def plot_heat_map(image, heat_map):
         The image that is plotted.
     heat_map : np.array
         The heat map put on top of the image
+    bound_type : str
+        The string used to specify whether to use a "box" or "contour" for bounding.
+    per_thresh ; float between 0 and 1
+        The float to set the threshold for which grayscale values to set to black or white.
+
+    Returns
+    ----------
+    np.array
+        image with bounding objects
+
     """
+    # convert heat map to image
+    hm_img = heat_map_to_img(heat_map)
+
+    # set threshold at % of 255
+    limit = int(perc_thresh * 255)
+    ret, thresh = cv2.threshold(hm_img, limit, 255, 0)
+    _, contours, _ = cv2.findContours(thresh, cv2.RETR_TREE,
+                                      cv2.CHAIN_APPROX_SIMPLE)
+
+    if bound_type == "contour":
+        bound_img = cv2.drawContours(image, contours, -1, (0, 0, 255), 10)
+
+    elif bound_type == "box":
+        bound_img = image
+        for c in contours:
+            # fit with rotated rectangle
+            # ( center (x,y), (width, height), angle of rotation
+            rect = cv2.minAreaRect(c)
+
+            # if angle of rotated rectangle within 5 deg, draw normalrectangle
+            if abs(rect[2]) < 5:
+                x, y, w, h = cv2.boundingRect(c)
+                # reject small samples; local fluctuations
+                if w * h > 900:
+                    bound_img = cv2.rectangle(
+                        bound_img, (x, y), (x + w, y + h), (160, 101, 179), 10)
+            else:
+                w, h = rect[1]
+                # reject small samples; local fluctuations
+                if w * h > 900:
+                    box = cv2.boxPoints(rect)
+                    box = np.int0(box)
+                    bound_img = cv2.drawContours(
+                        bound_img, [box], 0, (160, 101, 179), 10)
+    return bound_img
+
+
+def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box"):
+    """Overlay an image with the specified heat map or bounding box and plot the result.
+
+    Parameters
+    ----------
+    image : np.array
+        The image that is plotted.
+    heat_map : np.array
+        The heat map put on top of the image
+    bounding_box: bool
+        The boolean to specify whether to use a bounding box or not
+    bound_type: str
+        The string used to specify whether to use a "box" or "contour" for bounding.
+    """
+
     height, width, _ = image.shape
-    plt.imshow(image)
-    plt.imshow(cv2.resize(heat_map, (width, height), interpolation=cv2.INTER_NEAREST),
-               cmap=plt.cm.viridis,
-               alpha=.6,
-               interpolation='bilinear')
+    hm = cv2.resize(heat_map, (width, height), interpolation=cv2.INTER_NEAREST)
+
+    if bounding_box:
+        bound_img = bounded_image(image, hm, bound_type=bound_type)
+        plt.imshow(bound_img, origin="upper", aspect='equal')
+
+    else:
+        plt.imshow(image)
+        plt.imshow(hm,
+                   cmap=plt.cm.viridis,
+                   alpha=.6,
+                   interpolation='bilinear',
+                   vmin=0,
+                   vmax=1,
+                   origin="upper",
+                   aspect='equal')
+        cbar = plt.colorbar()
+        # needed to fix striations that appear in color bar with assumed alpha level
+        cbar.set_alpha(1)
+        cbar.draw_all()
     plt.xticks([])
     plt.yticks([])
     plt.show()
