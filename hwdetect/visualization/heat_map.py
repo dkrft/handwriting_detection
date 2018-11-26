@@ -83,7 +83,9 @@ def create_heat_map(image, predictor,
         The sampler that is used for drawing samples from the image and predicting their labels.
     preprocessors : list of functions from np.array to np.array
         A list of the image processing functions that are applied to the original image before starting the sampling and
-        prediction phase. The preprocessors are applied in the order of the list.
+        prediction phase. The preprocessors are applied in the order of the list. The goal of the preprocessors is to
+        remove machine writing, so that the predictor can jump over those chunks that are white after preprocessing.
+        The original image is used for prediction though.
     interpolator : class implementing visualization.pixel_interpolation.Interpolator
         The interpolator that is used to infer the pixels of the heat map based on the predictions made in the sampling
         and prediction phase.
