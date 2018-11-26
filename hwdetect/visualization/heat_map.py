@@ -111,7 +111,7 @@ def create_heat_map(image, predictor,
     print('preprocessing...')
     for preprocessor in preprocessors:
         image = preprocessor.preprocess(image)
-    print('pre-processing complete')
+    print('preprocessing complete')
 
     # make predictions
     predictions = sampler.sample(image, predictor, label_aggregator, original)

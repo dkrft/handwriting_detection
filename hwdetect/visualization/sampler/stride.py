@@ -7,7 +7,10 @@ import cv2
 class Stride(Sampler):
 
     def __init__(self, stride=None, y_random=0.1):
-        """samples chunks out of the image using a sliding window
+        """Samples chunks out of the image using a sliding window.
+        If the chunk contains dark pixels in the top but not at the bottom,
+        slides the chunk down in order to center the text so that it can
+        be properly classified. Does the same for text on the bottom as well.
 
         Parameters
         ----------
@@ -95,7 +98,7 @@ class Stride(Sampler):
 
                 # print approx every 10 percent
                 if progress % np.ceil(total_num_predictions/(100/10)) == 0:
-                    print("{}% of prediction complete".format(int(progress/total_num_predictions*100)))
+                    print("{}% of predictions complete".format(int(progress/total_num_predictions*100)))
 
                 y += int(sample_size * uniform(-self.y_random, self.y_random))
                 y = max(0, min(height, y))
@@ -108,7 +111,7 @@ class Stride(Sampler):
 
                     # look at where the dark values in that cunk are, make histogramm over rows sum lightness
                     # move to center of chunk towards the dark values.
-                    res = 5
+                    res = 5 # historgram resolution
                     hist = cv2.resize(chunk[0].min(axis=2), (1, res), interpolation=cv2.INTER_AREA)
                     darkest = np.argmin(hist)
                     # darkest has to be either 0 or 4 for res=5, so res-darkest-1

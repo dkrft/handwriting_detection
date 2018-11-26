@@ -11,7 +11,7 @@ from hwdetect.utils import show, get_path
 # if predictor not provided, will use pretrained
 # model from our repository
 
-img = cv2.imread(get_path('examples/example_data/easy2.jpg'))
+img = cv2.imread(get_path('examples/example_data/easy1.jpg'))
 
 # show(img)
 # show(hwdetect.preprocessor.Bandpass().preprocess(img))
@@ -20,8 +20,8 @@ img = cv2.imread(get_path('examples/example_data/easy2.jpg'))
 start = time.time()
 
 heatmap = hwdetect.visualization.create_heat_map(img,
-            preprocessors=[],
-            sampler=hwdetect.visualization.sampler.Stride(),
+            preprocessors=[hwdetect.preprocessor.Bandpass()],
+            sampler=hwdetect.visualization.sampler.Stride(stride=23),
             predictor=hwdetect.neural_network.Predictor(gpu=1),
             interpolator=KNeighborsRegressor())
 

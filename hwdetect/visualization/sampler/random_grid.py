@@ -71,15 +71,18 @@ class RandomGrid(Sampler):
         # pad image
         sample_size = predictor.get_image_size()
         border = sample_size // 2
-        padded_img = np.pad(image, ((border, border + 1), (border, border + 1), (0, 0)), 'edge')
+        padded_preprocessed = np.pad(image, ((border, border + 1), (border, border + 1), (0, 0)), 'edge')
         padded_original = np.pad(original, ((border, border + 1), (border, border + 1), (0, 0)), 'edge')
 
         # make predictions
         progress = 0
         step_size = ((width // cell_size) * (height // cell_size)) // 10
         predictions = {}
-        for i in range(0, height // cell_size):
-            for j in range(0, width // cell_size):
+        I = range(0, height // cell_size)
+        J = range(0, width // cell_size)
+        skipped_count = 0
+        for i in I:
+            for j in J:
                 # print progress
                 if step_size > 0 and (j + (i * (width // cell_size))) % step_size == 0:
                     print("{}% of predictions complete".format(progress))
@@ -92,7 +95,7 @@ class RandomGrid(Sampler):
                 for coordinate in coordinates:
                     y = (cell_size * i) + (coordinate // cell_size)
                     x = (cell_size * j) + (coordinate % cell_size)
-                    chunk = [padded_img[y:y + sample_size, x:x + sample_size]]
+                    chunk = [padded_preprocessed[y:y + sample_size, x:x + sample_size]]
                     if chunk[0].mean() < 252:
                         chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
                         pred = predictor.predict(chunk)[0]
@@ -100,5 +103,10 @@ class RandomGrid(Sampler):
                         # print(pred)
                         # show(chunk[0])
                     else:
+                        skipped_count += 1
                         predictions[(y, x)] = 0
+
+        total_num_predictions = len(I) * len(J)
+        print('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
+        
         return predictions
