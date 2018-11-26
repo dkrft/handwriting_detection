@@ -32,7 +32,10 @@ class Bandpass(Preprocessor):
         the more false classifications will be on handwriting; that is, the more
         similar the handwriting is to machine writing.
 
-        When handwriting, even a very clean one, is in an angle, it will be more likely ignored by this method.
+        When handwriting, even a very clean one, is in an angle, it will
+        be more likely ignored by this method. The same goes for machine
+        writing. Slight angles can be tollerated though, deskewing the
+        image should be considered beforehand.
 
         Then noise is removed and the mask is grown such that it covers
         the machine writing completely. Then the machine writing can
@@ -46,6 +49,7 @@ class Bandpass(Preprocessor):
         self.t = t
         self.m = m
         self.w = w
+        self.verbose = verbose
 
 
     def grow(self, mask, px_x=10, px_y=5):
@@ -56,7 +60,7 @@ class Bandpass(Preprocessor):
             [False, True, True, True, False]
         the mask was grown by 1px
 
-        pros: it's my custom style mask growing c:,
+        pros: it's my custom style square mask growing c:,
         it captures the shape of the text quite well
 
         cons: it's the slowest
@@ -165,7 +169,9 @@ class Bandpass(Preprocessor):
 
 
 
-    def bandpass_image(self, img, m, t, verbose=False):
+    def bandpass_image(self, img, m, t):
+
+        verbose = self.verbose
 
         # https://scipy-cookbook.readthedocs.io/items/ButterworthBandpass.html
 

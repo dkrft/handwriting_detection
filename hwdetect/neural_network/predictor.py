@@ -53,6 +53,7 @@ import tensorflow as tf
 import math
 from hwdetect.neural_network import model
 from hwdetect.utils import get_path
+from pathlib import Path
 
 
 class Predictor:
@@ -77,12 +78,10 @@ class Predictor:
         """
 
         if model_directory is None:
-            model_directory = get_path('hwdetect/neural_network/trained_models/', as_Path=True)
+            model_directory = get_path('hwdetect/neural_network/trained_models/')
 
-        if not model_directory.exists():
+        if not Path(model_directory).exists():
             raise ValueError('specified path {} does not exist'.format(model_directory))
-
-        model_directory = str(model_directory)
 
         # keep model directory
         self.model_directory = model_directory

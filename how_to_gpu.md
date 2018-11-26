@@ -1,4 +1,4 @@
-**installation:**
+installation:
 
 ```bash
 sudo pacman -S python-tensorflow-cuda
@@ -6,7 +6,7 @@ sudo pacman -S python-tensorflow-cuda
 
 https://www.tensorflow.org/guide/using_gpu
 
-**to get a list of devices that you can run tensorflow on:**
+to get a list of devices that you can run tensorflow on:
 
 ```bash
 python -c "import tensorflow as tf; tf.Session(config=tf.ConfigProto(log_device_placement=True))" 2>&1 >/dev/null | grep -P "^/" | grep -P "/device:.*? "
@@ -24,7 +24,7 @@ but then I fugred out my cpu is still full load (don't remember if it was faster
 
 after rebooting It seemed to work though.
 
-**However, then I figured out, it always uses the gpu now despite the tf.device.**
+However, then I figured out, it always uses the gpu now despite the tf.device.
 
 The real thing to set is in hwdetect/neural_network/predictor.py:
 

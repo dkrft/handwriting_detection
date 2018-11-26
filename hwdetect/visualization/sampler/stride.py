@@ -2,10 +2,11 @@ import numpy as np
 from .sampler import Sampler
 from hwdetect.utils import show
 from random import uniform
+import cv2
 
 class Stride(Sampler):
 
-    def __init__(self, stride=None, y_random=0.25):
+    def __init__(self, stride=None, y_random=0.1):
         """samples chunks out of the image using a sliding window
 
         Parameters
@@ -22,7 +23,7 @@ class Stride(Sampler):
         self.y_random = y_random
 
 
-    def sample(self, image, predictor, label_aggregator):
+    def sample(self, image, predictor, label_aggregator, original=None):
         """Draw samples from the specified image and predict their labels.
 
         Parameters
@@ -42,6 +43,9 @@ class Stride(Sampler):
             tuple of integers such that the first integer denotes the y-coordinate and the second integer denotes the
             x-coordinate.
         """
+
+        if original is None:
+            original = image
 
         # get size of image
         height = image.shape[0]
@@ -73,17 +77,21 @@ class Stride(Sampler):
         # for good with 100% more easy to debug code tadaa with a small extra memory overhead
 
         padded_img = np.pad(image, ((0, sample_size), (0, sample_size), (0, 0)), 'edge')
+        padded_original = np.pad(original, ((0, sample_size), (0, sample_size), (0, 0)), 'edge')
+
 
         X = range(0, width-sample_size, stride)
         Y = range(0, height-sample_size, stride)
 
         total_num_predictions = len(X) * len(Y)
 
+        skipped_count = 0
+
         # make predictions
         progress = 0
         predictions = {}
-        for x in X:
-            for y in Y:
+        for y in Y:
+            for x in X:
 
                 # print approx every 10 percent
                 if progress % np.ceil(total_num_predictions/(100/10)) == 0:
@@ -97,13 +105,33 @@ class Stride(Sampler):
                 chunk = padded_img[y:y + sample_size, x:x + sample_size][None, :]
 
                 if chunk[0].mean() < 250:
+
+                    # look at where the dark values in that cunk are, make histogramm over rows sum lightness
+                    # move to center of chunk towards the dark values.
+                    res = 5
+                    hist = cv2.resize(chunk[0].min(axis=2), (1, res), interpolation=cv2.INTER_AREA)
+                    darkest = np.argmin(hist)
+                    # darkest has to be either 0 or 4 for res=5, so res-darkest-1
+                    # would be the opposite side. If there on the opposite side
+                    # is the lightest value, move towards the dark value. 
+                    if hist[res-darkest-1] == hist.max():
+                        if darkest == 0:
+                            y -= sample_size/(res-1)
+                        if darkest == res-1:
+                            y += sample_size/(res-1)
+
+                    y = max(0, min(height, int(y)))
+
+                    chunk = padded_original[y:y + sample_size, x:x + sample_size][None, :]
+
                     prediction = predictor.predict(chunk)[0]
-                    predictions[(y, x)] = label_aggregator(prediction)
-                    # print(prediction)
-                    # show(chunk[0])
+                    predictions[(y + sample_size//2, x + sample_size//2)] = label_aggregator(prediction)
                 else:
-                    predictions[(y, x)] = 0
+                    skipped_count += 1
+                    predictions[(y + sample_size//2, x + sample_size//2)] = 0
 
                 progress += 1
+
+        print('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
 
         return predictions

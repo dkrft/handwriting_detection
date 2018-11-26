@@ -35,18 +35,20 @@ class RandomGrid(Sampler):
         self.grid_frequency = grid_frequency
         self.sample_frequency = sample_frequency
 
-    def sample(self, image, predictor, label_aggregator):
+    def sample(self, image, predictor, label_aggregator, original=None):
         """Draw samples from the specified image and predict their labels.
 
         Parameters
         ----------
-        image : np.array
+        image : np.ndarray
             The image from which the samples are drawn
         predictor : neural_network.predictor.Predictor
             The predictor object that is used for predicting the labels of a sample.
         label_aggregator : function from list of floats to float
             The function that is used for combining the labels predicted by the predictor into a single label. By
             default, only the first label is used.
+        original : np.ndarray
+            The original image. Default: None will use the preprocessed image
 
         Returns
         -------
@@ -56,6 +58,9 @@ class RandomGrid(Sampler):
             tuple of integers such that the first integer denotes the y-coordinate and the second integer denotes the
             x-coordinate.
         """
+
+        if original is None:
+            original = image
 
         # get size of image and grid cells
         height = image.shape[0]
@@ -67,6 +72,7 @@ class RandomGrid(Sampler):
         sample_size = predictor.get_image_size()
         border = sample_size // 2
         padded_img = np.pad(image, ((border, border + 1), (border, border + 1), (0, 0)), 'edge')
+        padded_original = np.pad(original, ((border, border + 1), (border, border + 1), (0, 0)), 'edge')
 
         # make predictions
         progress = 0
@@ -87,7 +93,12 @@ class RandomGrid(Sampler):
                     y = (cell_size * i) + (coordinate // cell_size)
                     x = (cell_size * j) + (coordinate % cell_size)
                     chunk = [padded_img[y:y + sample_size, x:x + sample_size]]
-                    if chunk[0].mean() < 250:
-                        predictions[(y, x)] = label_aggregator(predictor.predict(chunk)[0])
-
+                    if chunk[0].mean() < 252:
+                        chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
+                        pred = predictor.predict(chunk)[0]
+                        predictions[(y, x)] = label_aggregator(pred)
+                        print(pred)
+                        show(chunk[0])
+                    else:
+                        predictions[(y, x)] = 0
         return predictions
