@@ -2,11 +2,13 @@
 # running
 
 ```bash
-cd hwdetect_webapp
+cd webapp/hwdetect_webapp
 python manage.py runserver
 ```
 
 # login
+
+http://127.0.0.1:8000/accounts/login/
 
 - proxima
 - admin

@@ -97,8 +97,8 @@ class RandomGrid(Sampler):
                         chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
                         pred = predictor.predict(chunk)[0]
                         predictions[(y, x)] = label_aggregator(pred)
-                        print(pred)
-                        show(chunk[0])
+                        # print(pred)
+                        # show(chunk[0])
                     else:
                         predictions[(y, x)] = 0
         return predictions

@@ -1,6 +1,8 @@
 # django stuff
 from django.template import Context
 from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 # image stuff
 import numpy as np
@@ -15,11 +17,11 @@ from hwdetect.utils import show
 
 def create_heat_map(img):
 
-    heatmap = hwdetect.create_heat_map(img,
-            preprocessors=[hwdetect.preprocessor.Threshold(), hwdetect.preprocessor.Bandpass()],
-            sampler=hwdetect.sampler.RandomGrid(),
+    heatmap = hwdetect.visualization.create_heat_map(img,
+            preprocessors=[hwdetect.preprocessor.Bandpass()],
+            sampler=hwdetect.visualization.sampler.RandomGrid(),
             predictor=hwdetect.neural_network.Predictor(),
-            interpolator=hwdetect.interpolation.NearestNeighbour())
+            interpolator=hwdetect.visualization.interpolation.NearestNeighbour())
 
     # make sure it's 3 channel
     if len(heatmap.shape) == 2:
@@ -74,5 +76,11 @@ def process_picture(request):
         html_base64 = numpy_to_img_base64(np.array([[[255,255,255]]]))
         context['base64heatmap'] = html_base64
 
+    if not request.user.is_authenticated:
+        print('not authenticated!')
+        # https://stackoverflow.com/questions/11241668/what-is-reverse-in-django
+        return HttpResponseRedirect(reverse('login'))
+
+    print('authenticated.')
 
     return render(request, 'interface/interface.html', context)
