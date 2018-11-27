@@ -163,7 +163,7 @@ def heat_map_to_img(heat_map):
     return heat_map
 
 
-def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.85):
+def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.90):
     """Create image with bounding boxes or contours using the heat map
 
     Parameters
@@ -244,12 +244,14 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box"):
     height, width, _ = image.shape
     hm = cv2.resize(heat_map, (width, height), interpolation=cv2.INTER_NEAREST)
 
+    RGB_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
     if bounding_box:
-        bound_img = bounded_image(image, hm, bound_type=bound_type)
+        bound_img = bounded_image(RGB_img, hm, bound_type=bound_type)
         plt.imshow(bound_img, origin="upper", aspect='equal')
 
     else:
-        plt.imshow(image)
+        plt.imshow(RGB_img)
         plt.imshow(hm,
                    cmap=plt.cm.viridis,
                    alpha=.6,
@@ -259,7 +261,8 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box"):
                    origin="upper",
                    aspect='equal')
         cbar = plt.colorbar()
-        # needed to fix striations that appear in color bar with assumed alpha level
+        # needed to fix striations that appear in color bar with assumed alpha
+        # level
         cbar.set_alpha(1)
         cbar.draw_all()
     plt.xticks([])
