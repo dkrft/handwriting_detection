@@ -79,7 +79,12 @@ class NearestNeighbour(Interpolator):
 
         ret = np.zeros(len(X))
 
+        progress = 1
         for i, coord in enumerate(X):
+
+            if i == int(len(X)/10)*progress:
+                print("{}% of interpolation complete".format((progress-1)*10))
+                progress += 1
 
             # unpack tuple
             y, x = coord
