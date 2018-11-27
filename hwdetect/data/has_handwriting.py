@@ -53,6 +53,9 @@ import numpy as np
 
 from .defaults import index
 
+__author__ = "Ariel Bridgeman"
+__version__ = "1.0"
+
 # need to convert to grayscale and invert before combine with a mask
 gray_image = lambda image: cv2.bitwise_not(cv2.cvtColor(image,
                                                         cv2.COLOR_BGR2GRAY))

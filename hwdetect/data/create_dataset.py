@@ -67,6 +67,9 @@ from hwdetect.data.training_data import TrainingData
 from defaults import base, get_default_parser, mix_base, rand_base, train_base
 from sampler import random_sampler
 
+__author__ = "Ariel Bridgeman"
+__version__ = "1.0"
+
 
 def data_mixer(args, hdf_path):
     """

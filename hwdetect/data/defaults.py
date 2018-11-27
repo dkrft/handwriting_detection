@@ -35,6 +35,8 @@ import multiprocessing as mp
 import numpy as np
 import os
 
+__author__ = "Ariel Bridgeman"
+__version__ = "1.0"
 
 # --- convenience functions ---
 

@@ -56,6 +56,9 @@ import pandas as pd
 from hwdetect.data.defaults import base, get_default_parser, rand_base
 from hwdetect.data.has_handwriting import hw_tester
 
+__author__ = "Ariel Bridgeman"
+__version__ = "1.0"
+
 # --- convenience functions ---
 # generate iterator for multi-processing
 items = lambda arg, df: [arg] * len(df)
