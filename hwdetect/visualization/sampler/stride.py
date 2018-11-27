@@ -93,8 +93,13 @@ class Stride(Sampler):
         # make predictions
         progress = 0
         predictions = {}
-        for y in Y:
+
+        for y_grid in Y:
             for x in X:
+
+                # gonna overwrite y with some adjustments
+                # don't keep them from the previous iteration
+                y = y_grid
 
                 # print approx every 10 percent
                 if progress % np.ceil(total_num_predictions/(100/10)) == 0:
@@ -107,7 +112,22 @@ class Stride(Sampler):
                 # -> wraps the whole thing into square brackets
                 chunk = padded_img[y:y + sample_size, x:x + sample_size][None, :]
 
-                if chunk[0].mean() < 250:
+                # variances of chunks when accepting based on mean threshold of 250
+                #                  mean              max                min
+                # accepted chunks: 1774.933370429126 4437.332382468917  673.7359007991221
+                # declined chunks: 35.23593238683097 1015.4963759451304 0.0
+
+                if np.var(chunk[0]) > 200:
+                # if np.mean(chunk[0]) < 254:
+                
+                    # the ordering of the array doesn't make a difference, as can be seen here:
+                    # which means it looks as the points value in one dimension, and doesn't treat
+                    # the index as axis.
+                    #
+                    # >>> np.var([np.random.randint(0,2) for _ in range(1000)])
+                    # 0.249984
+                    # >>> np.var([0]*500 + [1]*500)
+                    # 0.25
 
                     # look at where the dark values in that cunk are, make histogramm over rows sum lightness
                     # move to center of chunk towards the dark values.
@@ -118,10 +138,12 @@ class Stride(Sampler):
                     # would be the opposite side. If there on the opposite side
                     # is the lightest value, move towards the dark value. 
                     if hist[res-darkest-1] == hist.max():
+                        # step = sample_size/(res-1)
+                        step = stride//2
                         if darkest == 0:
-                            y -= sample_size/(res-1)
+                            y -= step
                         if darkest == res-1:
-                            y += sample_size/(res-1)
+                            y += step
 
                     y = max(0, min(height, int(y)))
 
@@ -136,5 +158,13 @@ class Stride(Sampler):
                 progress += 1
 
         print('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
+
+        # visualize sampled points
+        """original = original//2
+        for point in predictions:
+            val = predictions[point]
+            y, x = point
+            cv2.circle(original, (x, y), 10, (128, 255-int(val*255), int(val*255)), -10)
+        show(original)"""
 
         return predictions

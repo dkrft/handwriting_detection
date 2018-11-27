@@ -96,7 +96,9 @@ class RandomGrid(Sampler):
                     y = (cell_size * i) + (coordinate // cell_size)
                     x = (cell_size * j) + (coordinate % cell_size)
                     chunk = [padded_preprocessed[y:y + sample_size, x:x + sample_size]]
-                    if chunk[0].mean() < 252:
+
+                    if np.var(chunk[0]) > 200:
+
                         chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
                         pred = predictor.predict(chunk)[0]
                         predictions[(y, x)] = label_aggregator(pred)
