@@ -2,18 +2,18 @@ import cv2
 import numpy as np
 from scipy import ndimage
 from hwdetect.utils import show
-from .preprocessor import Preprocessor
+from .postprocessor import Postprocessor
 
-class Threshold(Preprocessor):
+class Threshold(Postprocessor):
 
-    def __init__(self, upper=220, lower=30):
+    def __init__(self, upper=1, lower=0.75):
         self.upper = upper
         self.lower = lower
 
-    def filter(self, img):
+    def filter(self, heatmap):
         """
-        removes noise ,e.g. from jpg compression or just random noise
-        by thresholding the image
+        thresholds the heatmap in order to cut away irrelevant
+        values
 
         """
 
@@ -21,17 +21,14 @@ class Threshold(Preprocessor):
         lower = self.lower
 
         # set to float for more flexible computation
-        ret = img.copy().astype(float)
-        ret[img > upper] = upper
-        ret[img < lower] = lower
+        ret = heatmap.copy()
+        ret[heatmap > upper] = upper
+        ret[heatmap < lower] = lower
 
         # normalize to between 0 and 255
         ret -= lower
         ret *= 255
         ret /= (upper-lower)
-
-        # set type back
-        ret = ret.astype(img.dtype)
 
         return ret
         

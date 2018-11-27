@@ -1,1 +1,1 @@
-# from hwdetect.postprocessor.example import Example
+from hwdetect.postprocessor.threshold import Threshold

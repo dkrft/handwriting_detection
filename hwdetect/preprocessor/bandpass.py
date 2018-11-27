@@ -219,7 +219,7 @@ class Bandpass(Preprocessor):
         return filtered, lower_threshold, upper_threshold
         
 
-    def preprocess(self, img):
+    def filter(self, img):
 
         noise_x = self.noise_x
         noise_y = self.noise_y

@@ -18,7 +18,7 @@ class Deskew(Preprocessor):
         cropping some text away. Default: False"""
         self.keep_dimensions = keep_dimensions
 
-    def preprocess(self, img):
+    def filter(self, img):
         """
         if angle is None, will try to automatically detect the angle
         using the median of the angles of hough lines.

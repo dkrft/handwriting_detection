@@ -1,6 +1,6 @@
 class Preprocessor():
     """preprocessor base class to inherit from"""
     
-    def preprocess(self, img):
+    def filter(self, img):
         raise NotImplementedError()
         return img

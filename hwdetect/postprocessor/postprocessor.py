@@ -1,6 +1,6 @@
 class Postprocessor():
     """postprocessor base class to inherit from"""
     
-    def postprocess(self, img):
+    def filter(self, img):
         raise NotImplementedError()
         return img

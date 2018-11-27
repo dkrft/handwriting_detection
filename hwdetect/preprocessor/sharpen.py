@@ -16,7 +16,7 @@ class Sharpen(Preprocessor):
     def __init__(self, intensity=0.75):
         self.intensity = intensity
 
-    def preprocess(self, img):
+    def filter(self, img):
         intensity = self.intensity
         kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
         ret = (cv2.filter2D(img, -1, kernel) * intensity) + (img * (1-intensity))

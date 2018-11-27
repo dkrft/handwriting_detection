@@ -67,6 +67,7 @@ def create_heat_map(image, predictor,
                     sampler=RandomGrid(),
                     preprocessors=[],
                     interpolator=NearestNeighbour(),
+                    postprocessors=[],
                     heat_map_scale=10):
     """Create a heat map of an image based on the predictions made by the specified neural network model.
 
@@ -107,13 +108,13 @@ def create_heat_map(image, predictor,
     width = image.shape[1]
     heat_map = np.zeros((height // heat_map_scale, width // heat_map_scale))
 
-    # pre-process image
+    # preprocess image
     print('preprocessing...')
     for preprocessor in preprocessors:
-        image = preprocessor.preprocess(image)
-    print('preprocessing complete')
+        image = preprocessor.filter(image)
 
     # make predictions
+    print('predicting...')
     predictions = sampler.sample(image, predictor, label_aggregator, original)
 
     X_pred = [k for k in predictions]
@@ -130,6 +131,12 @@ def create_heat_map(image, predictor,
     values = interpolator.predict(coords_scaled)
 
     heat_map = values.reshape(heat_map.shape)
+
+    if len(postprocessors) > 0:
+        # postprocess heat_map
+        print('postprocessing...')
+        for postprocessor in postprocessors:
+            heat_map = postprocessor.filter(heat_map)
 
     print('done')
 
@@ -176,6 +183,12 @@ def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.85):
         image with bounding objects
 
     """
+
+    # make sure they are of the same height and width
+    if image.shape[:2] != heat_map.shape[:2]:
+        h, w = image.shape[:2]
+        heat_map = cv2.resize(heat_map, (w, h))
+
     # convert heat map to image
     hm_img = heat_map_to_img(heat_map)
 

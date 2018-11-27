@@ -126,7 +126,7 @@ class Hough(Preprocessor):
         return img_blur
 
 
-    def preprocess(self, img, verbose=False, repititions=1):
+    def filter(self, img, verbose=False, repititions=1):
 
         # ---- hyperparameters ---- 
         bw_threshold = self.bw_threshold
