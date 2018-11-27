@@ -152,7 +152,7 @@ def mp_sampler(zipped):
     Parameters
     ----------
     zipped : zip object
-        zipped object of grouped df and argparser object
+        zipped object of grouped df, argparser object, and base of hdf_path
 
     Returns
     ----------
@@ -287,6 +287,7 @@ def random_sampler(args, hdf_path):
     else:
         iterator = enumerate(zip(grouped, items(args, grouped)))
 
+    foundData = True
     for count, result in iterator:
 
         if not args.debug:
@@ -297,6 +298,7 @@ def random_sampler(args, hdf_path):
         # found in first iteration of mp_sampler that files not present
         # emergency stop
         if dic == "stop":
+            foundData = False
             break
 
         # will not save data unless not in debug mode or specified otherwise
@@ -316,7 +318,7 @@ def random_sampler(args, hdf_path):
         if count % 10 == 0:
             print("%s pages processed" % count)
 
-    if not args.debug or (args.debug and args.saveData):
+    if foundData and (not args.debug or (args.debug and args.saveData)):
         h = open(filebase + ".txt", "w")
         h.write("%s, %s" % (num_pagesHW, num_pages))
         h.close()
