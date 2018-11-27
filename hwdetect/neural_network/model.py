@@ -68,6 +68,7 @@ __version__ = "1.0"
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import random
 import pickle
 import os
@@ -119,16 +120,20 @@ def create(
     # create the computational graph
     graph = tf.Graph()
     with graph.as_default():
-    # with tf.device('/device:XLA_GPU:0'):
+        # with tf.device('/device:XLA_GPU:0'):
 
         # create input templates
-        x = tf.placeholder(tf.float32, shape=[None, image_size, image_size, image_channels], name='x')
-        y_true = tf.placeholder(tf.float32, shape=[None, label_size], name='y_true')
-        drop_out_rate = tf.placeholder(tf.float32, shape=[1], name='drop_out_rate')
-        positive_weight = tf.placeholder(tf.float32, shape=[1], name='positive_weight')
+        x = tf.placeholder(tf.float32, shape=[
+                           None, image_size, image_size, image_channels], name='x')
+        y_true = tf.placeholder(
+            tf.float32, shape=[None, label_size], name='y_true')
+        drop_out_rate = tf.placeholder(
+            tf.float32, shape=[1], name='drop_out_rate')
+        positive_weight = tf.placeholder(
+            tf.float32, shape=[1], name='positive_weight')
 
         # create the layers of the neural network
-        convolution_layer_1 = tf.layers.conv2d(x, filter_num, (filter_size,filter_size),
+        convolution_layer_1 = tf.layers.conv2d(x, filter_num, (filter_size, filter_size),
                                                padding='same', activation=tf.nn.relu, name="convolution_layer_1")
         pool_layer_1 = tf.layers.max_pooling2d(convolution_layer_1,
                                                pool_size=[2, 2], strides=[2, 2], padding='same', name='pool_layer_1')
@@ -138,16 +143,20 @@ def create(
                                                pool_size=[2, 2], strides=[2, 2], padding='same', name='pool_layer_2')
         pool_layer_reshape = tf.reshape(pool_layer_2, [-1, pool_layer_2.shape[1:].num_elements()],
                                         name='pool_layer_reshape')
-        drop_out_layer_1 = tf.layers.dropout(pool_layer_reshape, rate=drop_out_rate, name='drop_out_layer_1')
+        drop_out_layer_1 = tf.layers.dropout(
+            pool_layer_reshape, rate=drop_out_rate, name='drop_out_layer_1')
         full_layer_1 = tf.layers.dense(drop_out_layer_1, first_full_layer_size,
                                        activation=tf.nn.relu, name='full_layer_1')
-        drop_out_layer_2 = tf.layers.dropout(full_layer_1, rate=drop_out_rate, name='drop_out_layer_2')
+        drop_out_layer_2 = tf.layers.dropout(
+            full_layer_1, rate=drop_out_rate, name='drop_out_layer_2')
         full_layer_2 = tf.layers.dense(drop_out_layer_2, second_full_layer_size,
                                        activation=tf.nn.relu, name='full_layer_2')
-        drop_out_layer_3 = tf.layers.dropout(full_layer_2, rate=drop_out_rate, name='drop_out_layer_3')
+        drop_out_layer_3 = tf.layers.dropout(
+            full_layer_2, rate=drop_out_rate, name='drop_out_layer_3')
         full_layer_3 = tf.layers.dense(drop_out_layer_3, third_full_layer_size,
                                        activation=tf.nn.relu, name='full_layer_3')
-        y_prediction = tf.layers.dense(full_layer_3, label_size, activation=None, name='y_prediction')
+        y_prediction = tf.layers.dense(
+            full_layer_3, label_size, activation=None, name='y_prediction')
 
         # specify the loss function used by the optimizer during training
         loss = tf.reduce_mean(tf.nn.weighted_cross_entropy_with_logits(logits=y_prediction,
@@ -155,9 +164,11 @@ def create(
                                                                        pos_weight=positive_weight), name='loss')
         tf.train.AdamOptimizer().minimize(loss, name='optimizer')
 
-        # specify the accuracy function used for evaluating performance during training
+        # specify the accuracy function used for evaluating performance during
+        # training
         predictions = tf.cast(tf.nn.sigmoid(y_prediction) > 0.5, np.float32)
-        tf.reduce_mean(tf.cast(tf.equal(predictions, y_true), np.float32), name='accuracy')
+        tf.reduce_mean(tf.cast(tf.equal(predictions, y_true),
+                               np.float32), name='accuracy')
 
         # initialize the model and save it to the file system
         with tf.Session() as session:
@@ -232,9 +243,11 @@ def train(model_directory, training_data,
     with graph.as_default():
         with tf.Session() as session:
 
-            # set initial iteration to appropriate value if ``last`` was passed as the argument
+            # set initial iteration to appropriate value if ``last`` was passed
+            # as the argument
             if initial_iteration == 'last':
-                initial_iteration = max(get_recorded_iterations(model_directory, saved_only=True))
+                initial_iteration = max(get_recorded_iterations(
+                    model_directory, saved_only=True))
 
             # load training data from file if necessary
             if type(training_data) == str:
@@ -242,23 +255,31 @@ def train(model_directory, training_data,
                     training_data = pickle.load(f)
 
             # load model from file
-            loader = tf.train.import_meta_graph(model_directory + '/model-0.meta')
-            loader.restore(session, model_directory + '/model-' + str(initial_iteration))
+            loader = tf.train.import_meta_graph(
+                model_directory + '/model-0.meta')
+            loader.restore(session, model_directory +
+                           '/model-' + str(initial_iteration))
 
-            # delete iterations greater than the initial iteration before starting the training
-            iterations_to_delete = get_recorded_iterations(model_directory, saved_only=False)
+            # delete iterations greater than the initial iteration before
+            # starting the training
+            iterations_to_delete = get_recorded_iterations(
+                model_directory, saved_only=False)
             iterations_to_delete = set([iteration for iteration in iterations_to_delete
                                         if iteration > initial_iteration])
             delete(model_directory, iterations_to_delete)
 
-            # get tensors used for passing training data and parameters to the neural network
+            # get tensors used for passing training data and parameters to the
+            # neural network
             x_tensor = graph.get_tensor_by_name('x:0')
             y_true_tensor = graph.get_tensor_by_name('y_true:0')
             drop_out_rate_tensor = graph.get_tensor_by_name('drop_out_rate:0')
-            positive_weight_tensor = graph.get_tensor_by_name('positive_weight:0')
+            positive_weight_tensor = graph.get_tensor_by_name(
+                'positive_weight:0')
 
-            # get tensors used for reading predictions, accuracy and loss from the neural network
-            y_prediction_tensor = graph.get_tensor_by_name('y_prediction/BiasAdd:0')
+            # get tensors used for reading predictions, accuracy and loss from
+            # the neural network
+            y_prediction_tensor = graph.get_tensor_by_name(
+                'y_prediction/BiasAdd:0')
             loss_tensor = graph.get_tensor_by_name('loss:0')
             accuracy_tensor = graph.get_tensor_by_name('accuracy:0')
 
@@ -277,8 +298,10 @@ def train(model_directory, training_data,
                 # select a random batch from the training data
                 batch_indices = random.sample(range(len(training_data.x_train)),
                                               min(len(training_data.x_train), batch_size))
-                x_train_batch = [training_data.x_train[j] for j in batch_indices]
-                y_train_batch = [training_data.y_train[j] for j in batch_indices]
+                x_train_batch = [training_data.x_train[j]
+                                 for j in batch_indices]
+                y_train_batch = [training_data.y_train[j]
+                                 for j in batch_indices]
 
                 # perform an optimization step
                 feed_dict = {x_tensor: x_train_batch,
@@ -287,7 +310,8 @@ def train(model_directory, training_data,
                              positive_weight_tensor: [positive_weight]}
                 session.run(optimizer, feed_dict=feed_dict)
 
-                # evaluate the performance of the neural network and save its current state to the file system
+                # evaluate the performance of the neural network and save its
+                # current state to the file system
                 if (i % save_frequency == 0) or (i == max_iterations):
 
                     # iterate through the training data in chunks to save memory
@@ -300,9 +324,12 @@ def train(model_directory, training_data,
                                      y_true_tensor: y_eval_batch,
                                      drop_out_rate_tensor: [drop_out_rate],
                                      positive_weight_tensor: [positive_weight]}
-                        scaling_coefficient = (1.0 * len(x_eval_batch)) / (1.0 * len(training_data.x_train))
-                        loss_train += scaling_coefficient * session.run(loss_tensor, feed_dict=feed_dict)
-                        accuracy_train += scaling_coefficient * session.run(accuracy_tensor, feed_dict=feed_dict)
+                        scaling_coefficient = (
+                            1.0 * len(x_eval_batch)) / (1.0 * len(training_data.x_train))
+                        loss_train += scaling_coefficient * \
+                            session.run(loss_tensor, feed_dict=feed_dict)
+                        accuracy_train += scaling_coefficient * \
+                            session.run(accuracy_tensor, feed_dict=feed_dict)
 
                     # iterate through the test data set in chunks to save memory
                     loss_test = 0.0
@@ -314,9 +341,12 @@ def train(model_directory, training_data,
                                      y_true_tensor: y_eval_batch,
                                      drop_out_rate_tensor: [drop_out_rate],
                                      positive_weight_tensor: [positive_weight]}
-                        scaling_coefficient = (1.0 * len(x_eval_batch)) / (1.0 * len(training_data.x_test))
-                        loss_test += scaling_coefficient * session.run(loss_tensor, feed_dict=feed_dict)
-                        accuracy_test += scaling_coefficient * session.run(accuracy_tensor, feed_dict=feed_dict)
+                        scaling_coefficient = (
+                            1.0 * len(x_eval_batch)) / (1.0 * len(training_data.x_test))
+                        loss_test += scaling_coefficient * \
+                            session.run(loss_tensor, feed_dict=feed_dict)
+                        accuracy_test += scaling_coefficient * \
+                            session.run(accuracy_tensor, feed_dict=feed_dict)
 
                     # add the results of the evaluation to the log file
                     with open(model_directory + '/log.pkl', 'rb') as f:
@@ -329,15 +359,18 @@ def train(model_directory, training_data,
                     with open(model_directory + '/log.pkl', 'wb+') as f:
                         pickle.dump(log, f, pickle.HIGHEST_PROTOCOL)
 
-                    # save the current state of the neural network to the file system
+                    # save the current state of the neural network to the file
+                    # system
                     saver.save(session, model_directory + '/model',
                                global_step=initial_iteration + i, write_meta_graph=False)
 
-                    # print information about the current state of the training process
+                    # print information about the current state of the training
+                    # process
                     print('training status update')
                     print('\t current iteration: %d' % (initial_iteration + i,))
                     print('\t training data loss: %0.5f' % (loss_train,))
-                    print('\t training data accuracy: %0.5f' % (accuracy_train,))
+                    print('\t training data accuracy: %0.5f' %
+                          (accuracy_train,))
                     print('\t test data loss: %0.5f' % (loss_test,))
                     print('\t test data accuracy: %0.5f' % (accuracy_test,))
 
@@ -411,10 +444,12 @@ def get_recorded_iterations(model_directory, saved_only=False):
         iterations.sort()
         return iterations
 
-    # retrieve iterations from log file and file system if saved only flag is not set
+    # retrieve iterations from log file and file system if saved only flag is
+    # not set
     else:
         with open(model_directory + '/log.pkl', 'rb') as f:
-            # add iteration 0 to the output since this is not recorded in the log file)
+            # add iteration 0 to the output since this is not recorded in the
+            # log file)
             return [0] + pickle.load(f)['iterations']
 
 
@@ -444,7 +479,8 @@ def get_best_recorded_iteration(model_directory, data_set='test', metric='loss',
     """
 
     # get the set of iterations that need to be considered and load the log file
-    iterations = set(get_recorded_iterations(model_directory, saved_only=saved_only))
+    iterations = set(get_recorded_iterations(
+        model_directory, saved_only=saved_only))
     with open(model_directory + '/log.pkl', 'rb') as f:
         log = pickle.load(f)
 
@@ -491,11 +527,14 @@ def plot_training(model_directory, metric='loss', saved_only=False):
     """
 
     # get the iterations that need to be considered and load the log file
-    iteration_list = get_recorded_iterations(model_directory, saved_only=saved_only)
+    iteration_list = get_recorded_iterations(
+        model_directory, saved_only=saved_only)
     iteration_list = iteration_list[1:len(iteration_list)]
     iteration_set = set(iteration_list)
     with open(model_directory + '/log.pkl', 'rb') as f:
         log = pickle.load(f)
+
+    plt.figure(figsize=(24, 12))
 
     # prepare plot
     plt.xlabel('Iteration')
@@ -505,18 +544,27 @@ def plot_training(model_directory, metric='loss', saved_only=False):
         plt.ylabel('Loss')
         plt.title('Loss on Training and Test Data')
         plt.plot(iteration_list, [log['losses_train'][i] for i in range(0, len(log['iterations']))
-                                  if log['iterations'][i] in iteration_set], label="Training")
+                                  if log['iterations'][i] in iteration_set], label="Training", color='#60cec4', lw=4)
         plt.plot(iteration_list, [log['losses_test'][i] for i in range(0, len(log['iterations']))
-                                  if log['iterations'][i] in iteration_set], label="Test")
+                                  if log['iterations'][i] in iteration_set], label="Test", color="#a065b3", lw=4)
+        plt.gca().yaxis.set_minor_locator(MultipleLocator(0.1))
+        plt.gca().yaxis.set_major_locator(MultipleLocator(0.5))
+        plt.ylim(-0.1, 2.1)
 
     # plot accuracies
     elif metric == 'accuracy':
         plt.ylabel('Accuracy')
         plt.title('Accuracy on Training and Test Data')
         plt.plot(iteration_list, [log['accuracies_train'][i] for i in range(0, len(log['iterations']))
-                                  if log['iterations'][i] in iteration_set], label="Training")
+                                  if log['iterations'][i] in iteration_set], label="Training", color='#60cec4', lw=4)
         plt.plot(iteration_list, [log['accuracies_test'][i] for i in range(0, len(log['iterations']))
-                                  if log['iterations'][i] in iteration_set], label="Test")
+                                  if log['iterations'][i] in iteration_set], label="Test", color="#a065b3", lw=4)
+        plt.ylim(0.5, 1.02)
+        plt.gca().yaxis.set_minor_locator(MultipleLocator(0.025))
+        plt.gca().yaxis.set_major_locator(MultipleLocator(0.1))
+
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(100))
+    plt.gca().xaxis.set_major_locator(MultipleLocator(500))
 
     plt.legend()
     plt.show()
@@ -536,7 +584,8 @@ def get_image_size(model_directory):
         The width and height of the images accepted by the model.
     """
 
-    # load the log file and read out the size of the images accepted by the model
+    # load the log file and read out the size of the images accepted by the
+    # model
     with open(model_directory + '/log.pkl', 'rb') as f:
         return pickle.load(f)['image_size']
 
@@ -555,7 +604,8 @@ def get_image_channels(model_directory):
         The number of channels of the images accepted by the model.
     """
 
-    # load the log file and read out the number of channels of the images accepted by the model
+    # load the log file and read out the number of channels of the images
+    # accepted by the model
     with open(model_directory + '/log.pkl', 'rb') as f:
         return pickle.load(f)['image_channels']
 
@@ -574,6 +624,7 @@ def get_label_size(model_directory):
         The number of labels used to classify the images passed to the model.
     """
 
-    # load the log file and read out the number of labels used to classify the images passed to the model.
+    # load the log file and read out the number of labels used to classify the
+    # images passed to the model.
     with open(model_directory + '/log.pkl', 'rb') as f:
         return pickle.load(f)['label_size']
