@@ -133,7 +133,6 @@ def process_prima(prima_dir, hdf_dir):
     ----------
     prima_dir: str
         path to directory containing PRImA images and XMLs
-
     hdf_dir: str
         path to directory to save the pandas dataframe HDF in
 
@@ -144,7 +143,6 @@ def process_prima(prima_dir, hdf_dir):
         from the coordinates given in the xmls
     hdf
         pandas dataframe HDF saved within hdf_dir
-
 
     """
     prima = defaultdict(list)
