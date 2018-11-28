@@ -1,7 +1,27 @@
-<!-- templates/registration/login.html -->
-<h2>Login</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Login</button>
-</form>
+{% load static %}
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+        <meta name='description' content='Detect handwriting on predominantly machine-written page'>
+        <title>Detect handwriting</title>
+
+        <link rel='stylesheet' type='text/css' href='{% static "style.css" %}' />
+    </head>
+    <body>
+        <div id='header'>
+            Handwriting Detection Web Application
+            <a id='github_link' href='https://github.com/dkrft/handwriting_detection/'>GitHub</a>
+        </div>
+        <div id='main'>
+          <!-- templates/registration/login.html -->
+          <h2>Login</h2>
+          <form id="loginform" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Login</button>
+          </form>
+        </div>
+        <script src='{% static "script.js" %}'></script>
+    </body>
+</html>

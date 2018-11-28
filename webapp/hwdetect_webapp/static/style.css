@@ -4,16 +4,22 @@ body {
     overflow-y: scroll;
 }
 
+/* #00b4cb #82235c #7dd0b6 #1c4d8a; */
 #header {
     width: 100%;
-    background: #222;
+    background: #7dd0b6;
     padding: 16px 50px;
     color: white;
     box-sizing: border-box;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    text-align: center;
+    z-index: 10;
 }
 
 a {
-    color: #bbb;
+    color: black;
     text-decoration: none;
     padding-left: 1.464vw;
 }
@@ -22,41 +28,80 @@ a:hover {
     color: white;
 }
 
+.table {
+    display: table;
+    width: 100%;
+}
+
 .cell {
     width: 50%;
     display: table-cell;
+    vertical-align: top;
+}
+
+.space {
+    display: block;
+    padding-top: 4px;
 }
 
 form {
     width: auto;
-    padding: 1.464vw;
+    padding: 0vw 2vw;
     border: 1px solid #eee;
     border-radius: 2px;
     background: white;
 
-    /* cover the spinner */
-    position: relative;
-    z-index: 10;
-
     /* for centering divs that shrink to the contents size*/
     display: table;
-    margin: 1.464vw 0.732vw 0px auto;
+    margin: 10px auto;
 }
 
-#heatmap {
-    max-height: 80vh;
-    height: 100%;
-    margin: 1.464vw auto 0px 0.732vw;
+h2 {
+    text-align: center;
+
+}
+
+#uploadform {
+    margin-top: 61px;
+}
+
+#result_wrapper {
+    overflow: hidden;
+    height: 100vh;
+    padding: 61px 0px 20px 10px;
+    box-sizing: border-box;
+    padding-right: 25px;
     transition: opacity 0.5s ease-in-out;
     opacity: 0;
 }
 
-#main {
-    display: flex;
-    justify-content: center;
+#result_wrapper.visible {
+    opacity: 1;
 }
 
-#spinner {
+#sampling_res {
+    width: 65px;
+}
+
+#time {
+    font-size: 11px;
+    padding-left: 35px;
+    color: #777;
+}
+
+#result {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#spinnercontainer {
+    pointer-events: none;
+    width: 100%;
+    position: fixed;
+    top: 47vh;
+}
+
+#spinner1, #spinner2 {
     position: relative;
     margin: 0px auto;
     z-index: 0;
@@ -66,7 +111,7 @@ form {
     height: 50px;
     background: transparent;
     border-radius: 100%;
-    border: 10px solid;
+    border: 2px solid;
     border-color: #00b4cb #82235c #7dd0b6 #1c4d8a;
 
     /* animation */
@@ -79,16 +124,22 @@ form {
     /* transition*/
     opacity: 0;
     top: -60px;
-    transition: top 1s ease-out, opacity 1s ease-out;
+    transition: top 1s ease-in-out, opacity 1s ease-in-out;
 }
 
-#spinner_and_form_container {
-    display: table;
+#spinner2 {
+    animation-direction: reverse;
+    width: 40px;
+    height: 40px;
+    margin-top: -49px;
+}
 
+#form_container {
+    display: table;
     margin: 0px 0px 0px auto;
 }
 
-#spinner.active {
+#spinnercontainer.active div {
     top: -40px;
     opacity: 1;
 }
@@ -96,4 +147,8 @@ form {
 @keyframes spin {
     from {transform: rotate(0deg);}
     to {transform: rotate(360deg);}
+}
+
+#loginform {
+    margin-top: 61px;
 }

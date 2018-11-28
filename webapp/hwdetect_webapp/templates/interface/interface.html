@@ -14,20 +14,46 @@
             <a id='github_link' href='https://github.com/dkrft/handwriting_detection/'>GitHub</a>
         </div>
         <div id='main'>
-            <div class='cell'>
-                <div id='spinner_and_form_container'>
-                    <form id='form' action='' method='post' enctype='multipart/form-data'>
-                        {% csrf_token %}
-                        <p><input id='image' type='file' name='image'></p>
-                        <p><input type='submit' value='Submit'></p>
-                    </form>
-                    <div id='spinner'></div>
+            <div class='table'>
+                <div class='cell'>
+                    <div id='form_container'>
+                        <form id='uploadform' action='' method='post' enctype='multipart/form-data'>
+                            {% csrf_token %}
+                            <p><input id='image' type='file' name='image'></p>
+                            <p>
+                                <label for='bounding_box'>show bounding box</label>
+                                <input type='checkbox' id='bounding_box' name='bounding_box' checked>
+                                <span class='space'>
+                                <label for='use_preproc'>use preprocessing</label>
+                                <input type='checkbox' id='use_preproc' name='use_preproc' checked>
+                                <span class='space'>
+                                <label for='use_customint'>use custom interpolation</label>
+                                <input type='checkbox' id='use_customint' name='use_customint' checked>
+                                <span class='space'>
+                                <label for="sampling_method">sampling method</label>
+                                <select id="sampling_method" name="sampling_method">
+                                <option value="Random" selected>Random</option>
+                                <option value="Stride">Stride</option>
+                                </select>
+                                <span class='space'>
+                                <label for='sampling_res'>sampling resolution</label>
+                                <input type='number' id='sampling_res' name='sampling_res' value='1' step='0.1' min='0.1'>
+                            </p>
+                            <p><button id='submit'>submit</button><span id='time'></span></p>
+                        </form>
+                    </div>
                 </div>
-            </div>
-            <div class='cell'>
-                <img id='heatmap' src='{{ base64heatmap }}'>
+                <div class='cell'>
+                    <div id='result_wrapper'>
+                        <img id='result' src=''>
+                    </div>
+                </div>
             </div>
         </div>
         <script src='{% static "script.js" %}'></script>
+        <div id='spinnercontainer'>
+            <div id='spinner1'></div>
+            <div id='spinner2'></div>
+        </div>
     </body>
 </html>
