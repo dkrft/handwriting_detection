@@ -1,7 +1,11 @@
-import cv2
-import numpy as np
-from scipy import ndimage
-from hwdetect.utils import show
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+
+__author__ = "Tobias B <github.com/sezanzeb>"
+__version__ = "1.0"
+
+
 from .postprocessor import Postprocessor
 
 class Threshold(Postprocessor):

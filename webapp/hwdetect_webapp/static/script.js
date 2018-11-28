@@ -1,3 +1,8 @@
+/**
+ * @author Tobias B <github.com/sezanzeb>
+ */
+
+
 'use strict'
 
 window.onload = function () {

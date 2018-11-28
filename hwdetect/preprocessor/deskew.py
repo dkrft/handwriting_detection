@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+
+__author__ = "Tobias B <github.com/sezanzeb>"
+__version__ = "1.0"
+
+
 import cv2
 import numpy as np
 from scipy import ndimage
@@ -6,6 +14,7 @@ from hwdetect.preprocessor.preprocessor import Preprocessor
 
 # also see:
 # http://felix.abecassis.me/2011/09/opencv-detect-skew-angle/
+# which turned out to be basically the same approach,
 # but using median instead of mean, because counter-clockwise rotated
 # pictures could not be corrected otherwise.
 

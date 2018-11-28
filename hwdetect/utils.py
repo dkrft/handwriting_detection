@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+
+__author__ = "Tobias B <github.com/sezanzeb>"
+__version__ = "1.0"
+
+
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np

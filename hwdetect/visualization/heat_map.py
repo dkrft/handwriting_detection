@@ -48,7 +48,7 @@ Train a neuronal network to identify the bright areas of a chessboard and visual
     >>> heat_map.show_heat_map(chess_board, chess_board_hm)
 """
 
-__author__ = "Dennis Kraft, Tobias B <proxima@hip70890b.de>"
+__author__ = "Dennis Kraft, Tobias B <github.com/sezanzeb>"
 __version__ = "1.0"
 
 import numpy as np

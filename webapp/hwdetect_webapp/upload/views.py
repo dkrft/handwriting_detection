@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+
+__author__ = "Tobias B <github.com/sezanzeb>"
+__version__ = "1.0"
+
+
 # django stuff
 from django.template import Context
 from django.shortcuts import render
