@@ -39,7 +39,43 @@ class Bandpass(Preprocessor):
 
         Then noise is removed and the mask is grown such that it covers
         the machine writing completely. Then the machine writing can
-        be removed."""
+        be removed.
+        
+        Parameters
+        ----------
+        noise_x : int
+            area in -x and +x direction to scan for the number of neighbors
+            for noise removal
+        noise_y : int
+            area in -y and +y direction to scan for the number of neighbors
+            for noise removal
+        noise_t : int
+            how many other points have to be in the area specified by noise_x
+            and noise_y to be considered not noise
+        grow_x : int
+            how large to grow the mask in -x and +x direction to cover complete
+            letters of machine writing
+        grow_y : int
+            how large to grow the mask in -y and +y direction to cover complete
+            letters of machine writing
+        order : int
+            order of the butterworth bandpass
+        t : int
+            a value around 1.5 - 3. Specifies the threshold for high amplitudes.
+            Decrease to get more false positives, increase to get more false
+            negatives (in terms of the goal to select machine writing).
+
+            The maximum found amplitude in the picture is divided by this value
+            to form the threshold.
+        m : int
+            Don't go closer to 0 than m, after the parameter t has been applied.
+            Useful if there is no siginificant amplitude at all, but t is quite
+            dynamic and tries to separate some machine writing from the image
+            in every case.
+        w : int
+            Scale all images to this width. Set to None if no scaling should happen
+        verbose : bool
+        """
         self.noise_x = noise_x
         self.noise_y = noise_y
         self.noise_t = noise_t
@@ -220,6 +256,17 @@ class Bandpass(Preprocessor):
         
 
     def filter(self, img):
+        """see the description of this classes constructor
+        
+        Parameters
+        ----------
+        img : np.ndarray
+            array of shape (y, x, 3) or (y, x) with dtype uint8
+
+        Returns
+        -------
+        image with less machine writing on it
+        """
 
         noise_x = self.noise_x
         noise_y = self.noise_y
@@ -250,8 +297,10 @@ class Bandpass(Preprocessor):
 
         # to make it more stable, scale all images to equal width
         # (doing that increases the quality considerably)
-        h = int(img.shape[0]*(w/img.shape[1]))
-        img = cv2.resize(img, (w, h), interpolation=cv2.INTER_AREA).astype(float)
+        if not w is None:
+            h = int(img.shape[0]*(w/img.shape[1]))
+            img = cv2.resize(img, (w, h), interpolation=cv2.INTER_AREA)
+        img = img.astype(float)
 
         # make sure that between 0 and 255
         img -= img.min()

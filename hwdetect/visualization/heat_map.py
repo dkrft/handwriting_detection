@@ -42,7 +42,7 @@ Train a neuronal network to identify the bright areas of a chessboard and visual
     >>>
     >>> # create a heat map of the bright areas of the chessboard image using the most recent training iteration of the
     >>> # brightness detector model
-    >>> chess_board_hm = heat_map.create_heat_map(chess_board, Predictor(model_directory), sample_frequency=50)
+    >>> chess_board_hm = heat_map.create_heat_map(chess_board, Predictor(model_directory), sample_stepsize=50)
     >>>
     >>> # show the heat map
     >>> heat_map.show_heat_map(chess_board, chess_board_hm)
