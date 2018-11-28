@@ -13,27 +13,26 @@ from hwdetect.utils import show
 
 class RandomGrid(Sampler):
     """An object for sampling predictions at randomly drawn coordinates of an image but with a fixed number of samples
-    per cell of an evenly sapced grid.
+    per cell of an evenly spaced grid.
     """
 
-    def __init__(self, grid_frequency=25, sample_frequency=1000):
+    def __init__(self, grid_stepsize=25, sample_stepsize=1000):
         """Create a sampler that draws samples evenly at random within a predefined grid.
 
-        no need to supply width and height of the samples, as this
+        No need to supply width and height of the samples, as this
         value is provided by the model.
         
         Parameters
         ----------
-        grid_frequency : int, optional
-            The frequency with which grid_lines are drawn. For instance, a grid frequency of 25 corresponds to one grid
+        grid_stepsize : int, optional
+            The frequency with which grid_lines are drawn. For instance, a grid step size of 25 corresponds to one grid
             line for every 25 pixels.
-        sample_frequency : int, optional
-            The frequency with which samples are taken from the image. For instance, a sample frequency of 1000
-            corresponds to 1 sample per 1000 pixels of the image.
+        sample_stepsize : int, optional
+            The frequency with which samples are taken from the grid slices. For instance, a sample step size of 1000
+            corresponds to 1 sample per 1000 pixels of one grid slice.
         """
-
-        self.grid_frequency = grid_frequency
-        self.sample_frequency = sample_frequency
+        self.grid_stepsize = grid_stepsize
+        self.sample_stepsize = sample_stepsize
 
     def sample(self, image, predictor, label_aggregator, original=None):
         """Draw samples from the specified image and predict their labels.
@@ -65,7 +64,7 @@ class RandomGrid(Sampler):
         # get size of image and grid cells
         height = image.shape[0]
         width = image.shape[1]
-        cell_size = self.grid_frequency
+        cell_size = self.grid_stepsize
         cell_area = cell_size * cell_size
 
         # pad image
@@ -78,37 +77,34 @@ class RandomGrid(Sampler):
         progress = 0
         step_size = ((width // cell_size) * (height // cell_size)) // 10
         predictions = {}
-        I = range(0, height // cell_size)
-        J = range(0, width // cell_size)
         skipped_count = 0
-        for i in I:
-            for j in J:
+        for i in range(0, height // cell_size):
+            for j in range(0, width // cell_size):
                 # print progress
                 if step_size > 0 and (j + (i * (width // cell_size))) % step_size == 0:
                     print("{}% of predictions complete".format(progress))
                     progress += 10
 
                 # draw random sample coordinates without replacement
-                coordinates = np.random.choice(cell_area, cell_area // self.sample_frequency + 1, replace=False)
+                coordinates = np.random.choice(cell_area, cell_area // self.sample_stepsize + 1, replace=False)
 
                 # make prediction and add to the sample dictionary
                 for coordinate in coordinates:
+                    
+                    # coordinate will be an integer value, that has to be translated
+                    # into a x and y position of the grid cell.
                     y = (cell_size * i) + (coordinate // cell_size)
                     x = (cell_size * j) + (coordinate % cell_size)
                     chunk = [padded_preprocessed[y:y + sample_size, x:x + sample_size]]
 
                     if np.var(chunk[0]) > 200:
-
                         chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
                         pred = predictor.predict(chunk)[0]
                         predictions[(y, x)] = label_aggregator(pred)
-                        # print(pred)
-                        # show(chunk[0])
                     else:
                         skipped_count += 1
                         predictions[(y, x)] = 0
 
-        total_num_predictions = len(I) * len(J)
-        print('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
+        print('skipped {} of {} chunks'.format(skipped_count, len(predictions)))
         
         return predictions
