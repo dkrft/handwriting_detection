@@ -286,3 +286,4 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=
         plt.show()
     else:
         plt.savefig(save_as)
+    plt.clf()
