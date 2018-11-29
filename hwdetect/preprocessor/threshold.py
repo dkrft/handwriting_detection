@@ -7,6 +7,7 @@ __version__ = "1.0"
 
 
 from .preprocessor import Preprocessor
+import numpy as np
 
 class Threshold(Preprocessor):
 
@@ -27,7 +28,7 @@ class Threshold(Preprocessor):
             img -= img.min()
             img /= img.max()
             img *= 255
-            img = img.astype(img.dtype)
+            img = img.astype(np.uint8)
 
         upper = self.upper
         lower = self.lower
