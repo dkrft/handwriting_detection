@@ -215,3 +215,43 @@ h2 {
 #loginform {
     margin-top: 61px;
 }
+
+button:hover, #image_button:hover {
+    border-color: #7dd0b6;
+    box-shadow: inset 0px 0px 0px 1px #7dd0b6;
+}
+
+button, select, #image_button {
+    background: white;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+    transition: all 0.3s ease-in-out;
+    background: #f8f8f8;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+#image_button {
+    margin-right: 10px;
+}
+
+#imagebuttoncontainer {
+    position: relative;
+}
+
+#image_filename {
+    position: absolute;
+    top: 1px;
+    font-size: 13px;
+    padding: 0px;
+    margin: 0px;
+}
+
+#image {
+    display: none;
+}
+
+select {
+    padding: 0px 5px;
+}

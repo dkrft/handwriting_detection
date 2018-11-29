@@ -19,7 +19,11 @@
                     <div id='form_container'>
                         <form id='uploadform' action='' method='post' enctype='multipart/form-data'>
                             {% csrf_token %}
-                            <p><input id='image' type='file' name='image'></p>
+                            <p id='imagebuttoncontainer'>
+                                <label id='image_button' for='image'>browse</label>
+                                <label id='image_filename' for='image'></label>
+                                <input id='image' type='file' name='image'>
+                            </p>
                             <p>
                                 <label for='use_preproc'>use preprocessed picture</label>
                                 <input type='checkbox' id='use_preproc' name='use_preproc' checked>

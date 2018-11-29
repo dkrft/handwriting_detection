@@ -4,6 +4,12 @@
  * @author Tobias B <github.com/sezanzeb>
  */
 
+// show image filename next to button
+document.getElementById('image').addEventListener('change', function() {
+    let filename = document.getElementById('image').files[0].name
+    document.getElementById('image_filename').innerHTML = filename
+})
+
 /**
  * hides loading spinner and writes 'Internal Server Error' or the msg parameter into the form
  */
