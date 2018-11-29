@@ -1,0 +1,216 @@
+body {
+    margin: 0px;
+    font-family: sans;
+    overflow-y: scroll;
+    min-width: 724px;
+    min-height: 470px;
+}
+
+/* #00b4cb #82235c #7dd0b6 #1c4d8a; */
+#header {
+    width: 100%;
+    background: #7dd0b6;
+    padding: 16px 50px;
+    color: white;
+    box-sizing: border-box;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    text-align: center;
+    z-index: 10;
+}
+
+a {
+    color: black;
+    text-decoration: none;
+    padding-left: 1.464vw;
+}
+
+a:hover {
+    color: white;
+}
+
+.table {
+    display: table;
+    width: 100%;
+}
+
+.cell {
+    width: 50%;
+    display: table-cell;
+    vertical-align: top;
+}
+
+.space {
+    display: block;
+    padding-top: 4px;
+}
+
+form {
+    width: auto;
+    padding: 0vw 2vw;
+    border: 1px solid #eee;
+    border-radius: 2px;
+    background: white;
+
+    /* for centering divs that shrink to the contents size*/
+    display: table;
+    margin: 10px auto;
+}
+
+h2 {
+    text-align: center;
+
+}
+
+#uploadform, #console_wrapper, #tab_control {
+    width: 360px;
+    box-sizing: border-box;
+}
+
+#uploadform {
+    margin-top: 61px;
+}
+
+#console_wrapper {
+    padding: 1vw 2vw;
+    border: 1px solid #eee;
+    border-radius: 2px;
+    background: white;
+
+    display: block;
+    margin: 0px 0px 0px auto;
+    overflow-y: scroll;
+    height: 100px;
+}
+
+#console {
+    margin: 0px 0px 12px 0px;
+} 
+
+#tab_control {
+    padding: 1vw 0vw;
+    border: 1px solid #eee;
+    border-radius: 2px;
+    background: white;
+
+    display: block;
+    margin: 10px 0px 0px auto;
+    text-align: center;
+}
+
+#img_wrapper {
+    overflow: hidden;
+    height: 100vh;
+    padding: 61px 0px 20px 10px;
+    box-sizing: border-box;
+    padding-right: 25px;
+
+    /* do that on the wrapper, because when img gets src
+    it will jump from 0 to 1 without transition */
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+
+    /* so that the images stay in the box with
+    absolute positioning */
+    position: relative;
+}
+
+@media screen and (max-height: 470px) {
+    #img_wrapper {
+        height: 470px;
+    }
+}
+
+#img_wrapper.visible {
+    opacity: 1;
+}
+
+#sampling_res {
+    width: 65px;
+}
+
+#time {
+    font-size: 11px;
+    padding-left: 35px;
+    color: #777;
+}
+
+#img_wrapper > img {
+    max-width: 100%;
+    max-height: calc(100% - 70px);
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0;
+    border-radius: 2px;
+
+    /* so that the 3 images overlap each other */
+    position: absolute;
+    top: 61px;
+}
+
+#img_wrapper > img.visible {
+    opacity: 1;
+}
+
+#spinnercontainer {
+    pointer-events: none;
+    width: 100%;
+    position: fixed;
+    top: 30vh;
+}
+
+#spinner1, #spinner2 {
+    position: relative;
+    margin: 0px auto;
+    z-index: 0;
+    
+    /* style */
+    width: 50px;
+    height: 50px;
+    background: transparent;
+    border-radius: 100%;
+    border: 2px solid;
+    border-color: #00b4cb #82235c #7dd0b6 #1c4d8a;
+
+    /* animation */
+    animation-name: spin;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    transform: rotate(0deg);
+
+    /* transition*/
+    opacity: 0;
+    top: -60px;
+    transition: top 1s ease-in-out, opacity 1s ease-in-out;
+}
+
+#spinner2 {
+    animation-direction: reverse;
+    width: 40px;
+    height: 40px;
+    margin-top: -49px;
+}
+
+#form_container {
+    display: table;
+    margin: 0px 0px 0px auto;
+}
+
+#form_container form {
+    display: block;
+}
+
+#spinnercontainer.active div {
+    top: -40px;
+    opacity: 1;
+}
+
+@keyframes spin {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+}
+
+#loginform {
+    margin-top: 61px;
+}

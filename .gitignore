@@ -1,3 +1,31 @@
+.idea/*
+
+# webapp results
+webapp/results/*
+
+# environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# training data sets
+hwdetect/data/data_sets/*
+
+# trained models
+hwdetect/neural_network/trained_models/*
+examples/trained_example_models/*
+# main module used for testing
+main.py
+
+training_data/*
+model_archive/*
+.idea/*
+.vscode/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -38,6 +66,7 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.nox/
 .coverage
 .coverage.*
 .cache
@@ -54,7 +83,6 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
-db.sqlite3
 
 # Flask stuff:
 instance/
@@ -71,6 +99,10 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
 
 # pyenv
 .python-version
@@ -105,3 +137,8 @@ venv.bak/
 
 # specific
 errors.txt
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
