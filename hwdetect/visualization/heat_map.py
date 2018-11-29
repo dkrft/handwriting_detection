@@ -66,6 +66,7 @@ import logging
 # __name__ is hwdetect.visualization.heat_map
 logger = logging.getLogger(__name__)
 
+
 def create_heat_map(image, predictor,
                     label_aggregator=lambda labels: labels[0],
                     sampler=RandomGrid(),
@@ -152,7 +153,7 @@ def create_heat_map(image, predictor,
 
     if return_preprocessed:
         return heat_map, image
-    
+
     # default behaviour:
     return heat_map
 
@@ -240,7 +241,7 @@ def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.90):
     return bound_img
 
 
-def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box"):
+def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=""):
     """Overlay an image with the specified heat map or bounding box and plot the result.
 
     Parameters
@@ -281,4 +282,7 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box"):
         cbar.draw_all()
     plt.xticks([])
     plt.yticks([])
-    plt.show()
+    if save_as == "":
+        plt.show()
+    else:
+        plt.savefig(save_as)
