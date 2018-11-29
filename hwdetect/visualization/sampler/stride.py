@@ -87,12 +87,12 @@ class Stride(Sampler):
         # well, or you just add the chunk size onto it which would prevent stepping over it
         # for good with 100% more easy to debug code tadaa with a small extra memory overhead
 
-        padded_img = np.pad(image, ((0, sample_size), (0, sample_size), (0, 0)), 'edge')
-        padded_original = np.pad(original, ((0, sample_size), (0, sample_size), (0, 0)), 'edge')
+        p = int(np.ceil(sample_size / 2))
+        padded_img = np.pad(image, ((p, p), (p, p), (0, 0)), 'edge')
+        padded_original = np.pad(original, ((p, p), (p, p), (0, 0)), 'edge')
 
-
-        X = range(0, width-sample_size, stride)
-        Y = range(0, height-sample_size, stride)
+        X = range(0, width-p, stride)
+        Y = range(0, height-p, stride)
 
         total_num_predictions = len(X) * len(Y)
 
@@ -158,17 +158,19 @@ class Stride(Sampler):
                     chunk = padded_original[y:y + sample_size, x:x + sample_size][None, :]
 
                     prediction = predictor.predict(chunk)[0]
-                    predictions[(y + sample_size//2, x + sample_size//2)] = label_aggregator(prediction)
+                    # no need to offset x and y, since the heatmap is created on the original
+                    # image which is not padded
+                    predictions[(y, x)] = label_aggregator(prediction)
                 else:
                     skipped_count += 1
-                    predictions[(y + sample_size//2, x + sample_size//2)] = 0
+                    predictions[(y, x)] = 0
 
                 progress += 1
 
         logger.info('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
 
-        # visualize sampled points
-        """original = original//2
+        """# visualize sampled points
+        original = original//2
         for point in predictions:
             val = predictions[point]
             y, x = point

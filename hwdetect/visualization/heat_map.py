@@ -199,6 +199,8 @@ def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.90):
 
     """
 
+    image = image.copy()
+
     # make sure they are of the same height and width
     if image.shape[:2] != heat_map.shape[:2]:
         h, w = image.shape[:2]
@@ -259,6 +261,8 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=
     height, width, _ = image.shape
     hm = cv2.resize(heat_map, (width, height), interpolation=cv2.INTER_NEAREST)
 
+    plt.figure(figsize=(10, 10))
+
     RGB_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     if bounding_box:
@@ -285,4 +289,4 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=
     if save_as == "":
         plt.show()
     else:
-        plt.savefig(save_as)
+        plt.savefig(save_as, bbox_inches='tight', pad_inches=0)

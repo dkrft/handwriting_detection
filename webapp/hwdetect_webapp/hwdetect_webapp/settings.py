@@ -147,7 +147,7 @@ LOGGING = {
     # disable the logs that print me each single request
     'loggers': {
         'django': {
-            'level': 'WARNING',
+            'level': 'DEBUG',
             'handlers': ['null'],
             'propagate': False,
         },

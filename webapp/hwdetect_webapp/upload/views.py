@@ -46,7 +46,7 @@ logger.addHandler(logging.StreamHandler(log_stream))
 # (I disabled all other django info logs in
 # settings.py)
 view_logger = logging.getLogger(__name__)
-view_logger.setLevel(logging.INFO)
+view_logger.setLevel(logging.DEBUG)
 view_logger_handler = logging.StreamHandler()
 view_logger_handler.setFormatter(logging.Formatter('[%(message)s]'))
 view_logger.addHandler(view_logger_handler)
@@ -119,16 +119,15 @@ def create_heat_map(img, bounding_box, use_preproc, use_customint,
     # (but don't normalize, if all are low probabilities, keep them low)
     # heat_map *= 255
     # and of the same size as the other images
-    heat_map = cv2.resize(heat_map.astype(np.uint8), (img.shape[1], img.shape[0]))
-    """
+    heat_map = cv2.resize(heat_map.astype(np.uint8), (img.shape[1], img.shape[0]))"""
+    
     
     # store in filesystem
     if not os.path.exists(path):
         os.makedirs(path)
     cv2.imwrite(path + 'result.png', result)
     cv2.imwrite(path + 'preproc.png', preproc)
-
-    hwdetect.visualization.plot_heat_map(img, heat_map, save_as=path + 'heat_map.png')
+    np.save(path + 'heat_map', heat_map)
 
     view_logger.info('results stored to:"' + path + '"')
 
@@ -213,29 +212,48 @@ def process_picture(request):
                          use_customint, sampling_method,
                          sampling_res, path))
         t.start()
+        view_logger.debug('waiting for thread to finish')
         t.join()
         benchmark = round(time.time() - start, 1)
 
         # clear log
+        view_logger.debug('clearing log')
         log_stream.truncate(0)
         log_stream.seek(0)
 
         # queue is too small for the image
         # store in filesystem and read from that
+        view_logger.debug('loading images')
         result = cv2.imread(path + 'result.png')
         preproc = cv2.imread(path + 'preproc.png')
-        heat_map = cv2.imread(path + 'heat_map.png')
+        view_logger.debug('loading numpy')
+        heat_map = np.load(path + 'heat_map.npy')
 
         # happens when image failed to write in create_heat_map
-        assert not result is None
-        assert not preproc is None
-        assert not heat_map is None
+        if result is None:
+            logger.error('result is None')
+        if preproc is None:
+            logger.error('preproc is None')
+        if heat_map is None:
+            logger.error('heat_map is None')
 
+        view_logger.debug('creating plot')
+        hwdetect.visualization.plot_heat_map(img, heat_map, save_as=path + 'heat_map_plt.png')
+        heat_map_plt = cv2.imread(path + 'heat_map_plt.png')
+
+        view_logger.debug('resizing plot')
+        # resize it to the other images height
+        ratio = float(result.shape[1]) / float(heat_map_plt.shape[1])
+        plt_h = int(result.shape[0] * ratio)
+        plt_w = int(result.shape[1] * ratio)
+        heat_map_plt = cv2.resize(heat_map_plt, (plt_w, plt_h))
+    
+        view_logger.debug('sending response')
         # serve result properly in ajax request as image
         return JsonResponse({
             'result':numpy_to_img_base64(result),
             'preproc':numpy_to_img_base64(preproc),
-            'heat_map':numpy_to_img_base64(heat_map),
+            'heat_map':numpy_to_img_base64(heat_map_plt),
             'time':benchmark
         })
 

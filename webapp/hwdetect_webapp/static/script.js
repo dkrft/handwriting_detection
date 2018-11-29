@@ -36,11 +36,9 @@ function show(id) {
     // using a wrapper, otherwise it won't transition
     if(id === -1) {
         document.getElementById('img_wrapper').className = ''
-        console.log('hide img_wrapper')
     }
     else {
         document.getElementById('img_wrapper').className = 'visible'
-        console.log('show img_wrapper')
     }
 }
 

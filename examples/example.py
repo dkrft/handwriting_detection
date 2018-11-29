@@ -25,7 +25,7 @@ logger = logging.getLogger('hwdetect')
 logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler())
 
-img = cv2.imread(get_path('examples/example_data/easy2.jpg'))
+img = cv2.imread(get_path('examples/example_data/easy1.jpg'))
 
 """filtered = Bandpass().filter(img)
 show(filtered)
@@ -36,7 +36,7 @@ quit()"""
 start = time.time()
 heat_map = hwdetect.visualization.create_heat_map(img,
             preprocessors=[hwdetect.preprocessor.Scale(), hwdetect.preprocessor.Bandpass()],
-            sampler=hwdetect.visualization.sampler.Stride(stride=27),
+            sampler=hwdetect.visualization.sampler.Stride(),
             predictor=hwdetect.neural_network.Predictor(gpu=1),
             interpolator=KNeighborsRegressor(),
             postprocessors=[],
