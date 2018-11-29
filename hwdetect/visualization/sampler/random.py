@@ -8,7 +8,7 @@ __author__ = "Dennis Kraft"
 __version__ = "1.0"
 
 import numpy as np
-from .sampler import Sampler
+from .sampler import Sampler, logger
 from hwdetect.utils import show
 
 
@@ -72,20 +72,20 @@ class Random(Sampler):
         for i in range(0, len(coordinates)):
             # print progress
             if step_size > 0 and i % step_size == 0:
-                print("{}% of predictions complete".format(progress))
+                logger.info("{}% of predictions complete".format(progress))
                 progress += 10
 
             # make prediction and add to the sample dictionary
             y = coordinates[i] // width
             x = coordinates[i] % width
             chunk = [padded_preprocessed[y:y + sample_size, x:x + sample_size]]
-            if np.var(chunk[0]) > 200:
+            if np.var(chunk[0]) > 300:
                 chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
                 predictions[(y, x)] = label_aggregator(predictor.predict(chunk)[0])
             else:
                 skipped_count += 1
                 predictions[(y, x)] = 0
 
-        print('skipped {} of {} chunks'.format(skipped_count, len(predictions)))
+        logger.info('skipped {} of {} chunks'.format(skipped_count, len(predictions)))
 
         return predictions

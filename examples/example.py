@@ -18,11 +18,19 @@ from hwdetect.neural_network import Predictor
 
 import matplotlib.pyplot as plt
 
+import logging
+
+# enable INFO on all loggers in the hwdetect packages
+logger = logging.getLogger('hwdetect')
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler())
+
 img = cv2.imread(get_path('examples/example_data/easy2.jpg'))
 
 """filtered = Bandpass().filter(img)
 show(filtered)
 quit()"""
+
 
 # heat_map
 start = time.time()
@@ -31,9 +39,10 @@ heat_map = hwdetect.visualization.create_heat_map(img,
             sampler=hwdetect.visualization.sampler.Stride(stride=27),
             predictor=hwdetect.neural_network.Predictor(gpu=1),
             interpolator=KNeighborsRegressor(),
-            postprocessors=[])
+            postprocessors=[],
+            heat_map_scale=20)
 print(round(time.time() - start, 3), 'Seconds')
-# hwdetect.visualization.plot_heat_map(img, heat_map)
+hwdetect.visualization.plot_heat_map(img, heat_map)
 
 
 # bounding boxes

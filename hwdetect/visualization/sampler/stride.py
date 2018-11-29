@@ -7,7 +7,7 @@ __version__ = "1.0"
 
 
 import numpy as np
-from .sampler import Sampler
+from .sampler import Sampler, logger
 from hwdetect.utils import show
 from random import uniform
 import cv2
@@ -111,7 +111,7 @@ class Stride(Sampler):
 
                 # print approx every 10 percent
                 if progress % np.ceil(total_num_predictions/(100/10)) == 0:
-                    print("{}% of predictions complete".format(int(progress/total_num_predictions*100)))
+                    logger.info("{}% of predictions complete".format(int(progress/total_num_predictions*100)))
 
                 y += int(sample_size * uniform(-self.y_random, self.y_random))
                 y = max(0, min(height, y))
@@ -125,7 +125,7 @@ class Stride(Sampler):
                 # accepted chunks: 1774.933370429126 4437.332382468917  673.7359007991221
                 # declined chunks: 35.23593238683097 1015.4963759451304 0.0
 
-                if np.var(chunk[0]) > 200:
+                if np.var(chunk[0]) > 300:
                 # if np.mean(chunk[0]) < 254:
                 
                     # the ordering of the array doesn't make a difference, as can be seen here:
@@ -165,7 +165,7 @@ class Stride(Sampler):
 
                 progress += 1
 
-        print('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
+        logger.info('skipped {} of {} chunks'.format(skipped_count, total_num_predictions))
 
         # visualize sampled points
         """original = original//2

@@ -4,8 +4,13 @@ This module provides tools for selecting samples from an image and making predic
  predictions are used by the heat map module to create heat maps.
 """
 
+import logging
+
 __author__ = "Dennis Kraft"
 __version__ = "1.0"
+
+# common logger for all samplers
+logger = logging.getLogger(__name__)
 
 
 class Sampler:

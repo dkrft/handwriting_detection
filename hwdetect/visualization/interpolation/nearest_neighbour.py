@@ -9,7 +9,7 @@ __version__ = "1.0"
 
 import numpy as np
 import scipy as sp
-from .interpolator import Interpolator
+from .interpolator import Interpolator, logger
 
 
 class NearestNeighbour(Interpolator):
@@ -83,7 +83,7 @@ class NearestNeighbour(Interpolator):
         for i, coord in enumerate(X):
 
             if i == int(len(X)/10)*progress:
-                print("{}% of interpolation complete".format((progress-1)*10))
+                logger.info("{}% of interpolation complete".format((progress-1)*10))
                 progress += 1
 
             # unpack tuple

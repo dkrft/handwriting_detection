@@ -48,7 +48,7 @@ Train a neuronal network to identify the bright areas of a chessboard and visual
     >>> heat_map.show_heat_map(chess_board, chess_board_hm)
 """
 
-__author__ = "Dennis Kraft, Tobias B <github.com/sezanzeb>"
+__author__ = "Dennis Kraft, Ariel Bridgeman, Tobias B <github.com/sezanzeb>"
 __version__ = "1.0"
 
 import numpy as np
@@ -60,7 +60,11 @@ from scipy.spatial.distance import cdist
 from hwdetect.utils import show
 from sklearn.neighbors import KNeighborsRegressor
 import time
+import logging
 
+
+# __name__ is hwdetect.visualization.heat_map
+logger = logging.getLogger(__name__)
 
 def create_heat_map(image, predictor,
                     label_aggregator=lambda labels: labels[0],
@@ -68,7 +72,8 @@ def create_heat_map(image, predictor,
                     preprocessors=[],
                     interpolator=NearestNeighbour(),
                     postprocessors=[],
-                    heat_map_scale=10):
+                    heat_map_scale=10,
+                    return_preprocessed=False):
     """Create a heat map of an image based on the predictions made by the specified neural network model.
 
     Parameters
@@ -93,6 +98,9 @@ def create_heat_map(image, predictor,
     heat_map_scale : int
         The resolution of the heat map. For instance, a resolution of 5 implies that squares of 5 by 5 pixels in the
         original image are condensed into 1 pixel in the heat map.
+    return_preprocessed : bool
+        If True, will return a 2-tuple (heat_map, preprocessed)
+        Default: False
 
     Returns
     -------
@@ -106,15 +114,17 @@ def create_heat_map(image, predictor,
     # set up the heat map
     height = image.shape[0]
     width = image.shape[1]
+    heat_map_scale = min(heat_map_scale, min(width, height))
     heat_map = np.zeros((height // heat_map_scale, width // heat_map_scale))
 
     # preprocess image
-    print('preprocessing...')
-    for preprocessor in preprocessors:
-        image = preprocessor.filter(image)
+    if len(preprocessors) > 0:
+        logger.info('preprocessing...')
+        for preprocessor in preprocessors:
+            image = preprocessor.filter(image)
 
     # make predictions
-    print('predicting...')
+    logger.info('predicting...')
     predictions = sampler.sample(image, predictor, label_aggregator, original)
 
     X_pred = [k for k in predictions]
@@ -127,19 +137,23 @@ def create_heat_map(image, predictor,
         np.dstack(np.mgrid[:heat_map.shape[0], :heat_map.shape[1]]))
     coords_scaled = coords * heat_map_scale
 
-    print('interpolating...')
+    logger.info('interpolating...')
     values = interpolator.predict(coords_scaled)
 
     heat_map = values.reshape(heat_map.shape)
 
     if len(postprocessors) > 0:
         # postprocess heat_map
-        print('postprocessing...')
+        logger.info('postprocessing...')
         for postprocessor in postprocessors:
             heat_map = postprocessor.filter(heat_map)
 
-    print('done')
+    logger.info('done')
 
+    if return_preprocessed:
+        return heat_map, image
+    
+    # default behaviour:
     return heat_map
 
 
