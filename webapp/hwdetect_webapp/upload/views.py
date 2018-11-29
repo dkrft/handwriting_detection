@@ -71,7 +71,7 @@ def create_heat_map(img, bounding_box, use_preproc, use_customint,
         interpolator = NearestNeighbour()    
     
     # the hyperparamters are optimized such that approx 1000 samples are drawn
-    # for each sampler on easy2.jpg. scale is used to scale the params in such
+    # for each sampler on easy2.png. scale is used to scale the params in such
     # a way, that they would approximately sample the number specified in
     # sampling_resolution
     sampler = {
@@ -125,10 +125,10 @@ def create_heat_map(img, bounding_box, use_preproc, use_customint,
     # store in filesystem
     if not os.path.exists(path):
         os.makedirs(path)
-    cv2.imwrite(path + 'result.jpg', result)
-    cv2.imwrite(path + 'preproc.jpg', preproc)
+    cv2.imwrite(path + 'result.png', result)
+    cv2.imwrite(path + 'preproc.png', preproc)
 
-    hwdetect.visualization.plot_heat_map(img, heat_map, save_as=path + 'heat_map.jpg')
+    hwdetect.visualization.plot_heat_map(img, heat_map, save_as=path + 'heat_map.png')
 
     view_logger.info('results stored to:"' + path + '"')
 
@@ -222,9 +222,9 @@ def process_picture(request):
 
         # queue is too small for the image
         # store in filesystem and read from that
-        result = cv2.imread(path + 'result.jpg')
-        preproc = cv2.imread(path + 'preproc.jpg')
-        heat_map = cv2.imread(path + 'heat_map.jpg')
+        result = cv2.imread(path + 'result.png')
+        preproc = cv2.imread(path + 'preproc.png')
+        heat_map = cv2.imread(path + 'heat_map.png')
 
         # happens when image failed to write in create_heat_map
         assert not result is None
