@@ -239,6 +239,7 @@ def process_picture(request):
 
         view_logger.debug('creating plot')
         hwdetect.visualization.plot_heat_map(img, heat_map, save_as=path + 'heat_map_plt.png')
+        view_logger.debug('reading plot file')
         heat_map_plt = cv2.imread(path + 'heat_map_plt.png')
 
         view_logger.debug('resizing plot')
