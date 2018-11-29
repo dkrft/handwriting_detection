@@ -92,6 +92,7 @@ def create_heat_map(img, bounding_box, use_preproc, use_customint,
                             postprocessors=[],
                             heat_map_scale=heat_map_scale,
                             return_preprocessed=True)
+    hm = heat_map
 
     # if preprocessing was disabled, then do that now in order
     # to visualize it on the frontend
@@ -127,7 +128,10 @@ def create_heat_map(img, bounding_box, use_preproc, use_customint,
         os.makedirs(path)
     cv2.imwrite(path + 'result.jpg', result)
     cv2.imwrite(path + 'preproc.jpg', preproc)
-    cv2.imwrite(path + 'heat_map.jpg', heat_map)
+
+    hwdetect.visualization.plot_heat_map(img, hm, save_as=path + 'heat_map.jpg')
+
+    # cv2.imwrite(path + 'heat_map.jpg', heat_map)
 
     view_logger.info('results stored to:"' + path + '"')
 
