@@ -102,7 +102,7 @@ window.onload = function () {
             let log = e.data
             if(log != "") {
                 document.getElementById('console').innerHTML = log
-                console_wrapper = document.getElementById('console_wrapper')
+                let console_wrapper = document.getElementById('console_wrapper')
                 console_wrapper.scrollTop = console_wrapper.scrollHeight
             }
         }
