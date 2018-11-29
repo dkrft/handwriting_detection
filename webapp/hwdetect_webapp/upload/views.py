@@ -27,6 +27,7 @@ from hwdetect.visualization.sampler import Random, RandomGrid, Stride
 # etc
 import time
 from threading import Thread
+from multiprocessing import Process
 import logging
 import io
 import os
@@ -238,7 +239,16 @@ def process_picture(request):
             logger.error('heat_map is None')
 
         view_logger.debug('creating plot')
-        hwdetect.visualization.plot_heat_map(img, heat_map, save_as=path + 'heat_map_plt.png')
+        # spawn a new process so that tkinter does not complain about not being in main thread
+        p = Process(target=hwdetect.visualization.plot_heat_map,
+                    args=(img,
+                          heat_map,
+                          None, # default
+                          'box', # default
+                          path + 'heat_map_plt.png'))
+        p.start()
+        p.join()
+        p.terminate()
         view_logger.debug('reading plot file')
         heat_map_plt = cv2.imread(path + 'heat_map_plt.png')
 

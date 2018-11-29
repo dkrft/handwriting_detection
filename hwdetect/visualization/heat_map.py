@@ -242,6 +242,7 @@ def bounded_image(image, heat_map, bound_type="box", perc_thresh=0.90):
                         bound_img, [box], 0, (160, 101, 179), 10)
     return bound_img
 
+
 def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=""):
     """Overlay an image with the specified heat map or bounding box and plot the result.
 
@@ -256,14 +257,14 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=
     bound_type: str
         The string used to specify whether to use a "box" or "contour" for bounding.
     """
-
+    
     height, width, _ = image.shape
     hm = cv2.resize(heat_map, (width, height), interpolation=cv2.INTER_NEAREST)
 
     plt.figure(figsize=(10, 10))
 
     RGB_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
+    
     if bounding_box:
         bound_img = bounded_image(RGB_img, hm, bound_type=bound_type)
         plt.imshow(bound_img, origin="upper", aspect='equal')
@@ -282,11 +283,13 @@ def plot_heat_map(image, heat_map, bounding_box=None, bound_type="box", save_as=
         # level
         cbar.set_alpha(1)
         cbar.draw_all()
-        print(7)
+    
     plt.xticks([])
     plt.yticks([])
     if save_as == "":
         plt.show()
     else:
         plt.savefig(save_as, bbox_inches='tight', pad_inches=0)
+    
     plt.clf()
+    
