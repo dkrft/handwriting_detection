@@ -288,7 +288,8 @@ def random_sampler(args, hdf_path):
                                        zip(grouped, items(args, grouped),
                                            items(base(hdf_path), grouped))))
     else:
-        iterator = enumerate(zip(grouped, items(args, grouped)))
+        iterator = enumerate(zip(grouped, items(args, grouped),
+                                 items(base(hdf_path), grouped)))
 
     foundData = True
     for count, result in iterator:
