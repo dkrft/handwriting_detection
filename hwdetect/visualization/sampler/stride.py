@@ -14,7 +14,7 @@ import cv2
 
 class Stride(Sampler):
 
-    def __init__(self, stride=None, y_random=0.1):
+    def __init__(self, stride=None, y_random=0):
         """Samples chunks out of the image using a sliding window.
         If the chunk contains dark pixels in the top but not at the bottom,
         slides the chunk down in order to center the text so that it can
