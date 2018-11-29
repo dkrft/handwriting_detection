@@ -1,5 +1,8 @@
 .idea/*
 
+# webapp results
+webapp/results/*
+
 # environments
 .env
 .venv

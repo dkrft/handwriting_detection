@@ -8,7 +8,7 @@ __author__ = "Dennis Kraft"
 __version__ = "1.0"
 
 import numpy as np
-from .sampler import Sampler
+from .sampler import Sampler, logger
 from hwdetect.utils import show
 
 class RandomGrid(Sampler):
@@ -82,7 +82,7 @@ class RandomGrid(Sampler):
             for j in range(0, width // cell_size):
                 # print progress
                 if step_size > 0 and (j + (i * (width // cell_size))) % step_size == 0:
-                    print("{}% of predictions complete".format(progress))
+                    logger.info("{}% of predictions complete".format(progress))
                     progress += 10
 
                 # draw random sample coordinates without replacement
@@ -97,7 +97,7 @@ class RandomGrid(Sampler):
                     x = (cell_size * j) + (coordinate % cell_size)
                     chunk = [padded_preprocessed[y:y + sample_size, x:x + sample_size]]
 
-                    if np.var(chunk[0]) > 200:
+                    if np.var(chunk[0]) > 300:
                         chunk = [padded_original[y:y + sample_size, x:x + sample_size]]
                         pred = predictor.predict(chunk)[0]
                         predictions[(y, x)] = label_aggregator(pred)
@@ -105,6 +105,6 @@ class RandomGrid(Sampler):
                         skipped_count += 1
                         predictions[(y, x)] = 0
 
-        print('skipped {} of {} chunks'.format(skipped_count, len(predictions)))
+        logger.info('skipped {} of {} chunks'.format(skipped_count, len(predictions)))
         
         return predictions

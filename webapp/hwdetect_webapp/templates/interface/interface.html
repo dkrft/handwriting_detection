@@ -11,7 +11,7 @@
     <body>
         <div id='header'>
             Handwriting Detection Web Application
-            <a id='github_link' href='https://github.com/dkrft/handwriting_detection/'>GitHub</a>
+            <a id='github_link' target='_blank' href='https://github.com/dkrft/handwriting_detection/'>GitHub</a>
         </div>
         <div id='main'>
             <div class='table'>
@@ -21,10 +21,7 @@
                             {% csrf_token %}
                             <p><input id='image' type='file' name='image'></p>
                             <p>
-                                <label for='bounding_box'>show bounding box</label>
-                                <input type='checkbox' id='bounding_box' name='bounding_box' checked>
-                                <span class='space'>
-                                <label for='use_preproc'>use preprocessing</label>
+                                <label for='use_preproc'>use preprocessed picture</label>
                                 <input type='checkbox' id='use_preproc' name='use_preproc' checked>
                                 <span class='space'>
                                 <label for='use_customint'>use custom interpolation</label>
@@ -42,10 +39,22 @@
                             <p><button id='submit'>submit</button><span id='time'></span></p>
                         </form>
                     </div>
+                    <div id='console_wrapper'>
+                        <pre id='console'>
+                            
+                        </pre>
+                    </div>
+                    <div id='tab_control'>
+                        <button id='result_button'>result</button>
+                        <button id='heat_map_button'>CNN output</button>
+                        <button id='preproc_button'>preproc</button>
+                    </div>
                 </div>
                 <div class='cell'>
-                    <div id='result_wrapper'>
+                    <div id='img_wrapper'>
                         <img id='result' src=''>
+                        <img id='preproc' src=''>
+                        <img id='heat_map' src=''>
                     </div>
                 </div>
             </div>

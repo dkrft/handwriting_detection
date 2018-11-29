@@ -2,6 +2,8 @@ body {
     margin: 0px;
     font-family: sans;
     overflow-y: scroll;
+    min-width: 724px;
+    min-height: 470px;
 }
 
 /* #00b4cb #82235c #7dd0b6 #1c4d8a; */
@@ -61,21 +63,66 @@ h2 {
 
 }
 
+#uploadform, #console_wrapper, #tab_control {
+    width: 360px;
+    box-sizing: border-box;
+}
+
 #uploadform {
     margin-top: 61px;
 }
 
-#result_wrapper {
+#console_wrapper {
+    padding: 1vw 2vw;
+    border: 1px solid #eee;
+    border-radius: 2px;
+    background: white;
+
+    display: block;
+    margin: 0px 0px 0px auto;
+    overflow-y: scroll;
+    height: 100px;
+}
+
+#console {
+    margin: 0px 0px 12px 0px;
+} 
+
+#tab_control {
+    padding: 1vw 0vw;
+    border: 1px solid #eee;
+    border-radius: 2px;
+    background: white;
+
+    display: block;
+    margin: 10px 0px 0px auto;
+    text-align: center;
+}
+
+#img_wrapper {
     overflow: hidden;
     height: 100vh;
     padding: 61px 0px 20px 10px;
     box-sizing: border-box;
     padding-right: 25px;
-    transition: opacity 0.5s ease-in-out;
+
+    /* do that on the wrapper, because when img gets src
+    it will jump from 0 to 1 without transition */
     opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+
+    /* so that the images stay in the box with
+    absolute positioning */
+    position: relative;
 }
 
-#result_wrapper.visible {
+@media screen and (max-height: 470px) {
+    #img_wrapper {
+        height: 470px;
+    }
+}
+
+#img_wrapper.visible {
     opacity: 1;
 }
 
@@ -89,16 +136,27 @@ h2 {
     color: #777;
 }
 
-#result {
+#img_wrapper > img {
     max-width: 100%;
-    max-height: 100%;
+    max-height: calc(100% - 70px);
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0;
+    border-radius: 2px;
+
+    /* so that the 3 images overlap each other */
+    position: absolute;
+    top: 61px;
+}
+
+#img_wrapper > img.visible {
+    opacity: 1;
 }
 
 #spinnercontainer {
     pointer-events: none;
     width: 100%;
     position: fixed;
-    top: 47vh;
+    top: 30vh;
 }
 
 #spinner1, #spinner2 {
@@ -137,6 +195,10 @@ h2 {
 #form_container {
     display: table;
     margin: 0px 0px 0px auto;
+}
+
+#form_container form {
+    display: block;
 }
 
 #spinnercontainer.active div {

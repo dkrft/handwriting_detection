@@ -50,6 +50,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cookies'
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+
 ROOT_URLCONF = 'hwdetect_webapp.urls'
 
 TEMPLATES = [
@@ -130,3 +134,22 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_REDIRECT_URL = '/'
+
+# https://stackoverflow.com/questions/31287548/how-to-get-django-runserver-to-stop-logging-to-console-in-pycharm
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'null': {
+            'class': 'logging.NullHandler',
+        },
+    },
+    # disable the logs that print me each single request
+    'loggers': {
+        'django': {
+            'level': 'WARNING',
+            'handlers': ['null'],
+            'propagate': False,
+        },
+    },
+}

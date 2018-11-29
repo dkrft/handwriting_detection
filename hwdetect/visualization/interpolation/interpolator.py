@@ -4,8 +4,14 @@ This module provides tools for interpolating the pixels of an image based on a l
 interpolation techniques are used by the heat map module to speed up the prediction process and reduce noise.
 """
 
+import logging
+
 __author__ = "Dennis Kraft"
 __version__ = "1.0"
+
+# common logger for all interpolators
+logger = logging.getLogger(__name__)
+
 
 class Interpolator:
     """A template for interpolator objects."""
