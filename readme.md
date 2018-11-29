@@ -78,7 +78,7 @@ hwdetect/neural_network/trained_models/, for example
 Create the folder if it doesn't exist. You can figure the path to the
 module out using the following command in a terminal:
 
-`python -c "import hwdetect; print(hwdetect.__file__)`
+`python -c "import hwdetect; print(hwdetect.__file__)"`
 
 
 

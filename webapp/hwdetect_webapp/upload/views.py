@@ -21,7 +21,7 @@ import hwdetect
 from hwdetect.utils import show, get_path
 from sklearn.neighbors import KNeighborsRegressor
 from hwdetect.visualization.interpolation import NearestNeighbour
-from hwdetect.preprocessor import Bandpass
+from hwdetect.preprocessor import Bandpass, Threshold, Scale
 from hwdetect.neural_network import Predictor
 from hwdetect.visualization.sampler import Random, RandomGrid, Stride
 # etc
@@ -55,13 +55,15 @@ view_logger.addHandler(view_logger_handler)
 
 def create_heat_map(img, bounding_box, use_preproc, use_customint,
                     sampling_method, scale, path):
-    # 1. detection
+
+    # normalize and threshold
+    img = Threshold().filter(img)
 
     # prepare the preprocessing pipeline if wanted
     preprocessors = []
     if use_preproc:
         # use Scale to make sure ridiculously large scans don't break the system
-        preprocessors = [hwdetect.preprocessor.Scale(), hwdetect.preprocessor.Bandpass()]
+        preprocessors = [Scale(), Bandpass()]
 
     # and prepare the interpolator according to the frontend form settings
     interpolator = KNeighborsRegressor()

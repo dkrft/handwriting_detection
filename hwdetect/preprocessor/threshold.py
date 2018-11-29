@@ -10,9 +10,10 @@ from .preprocessor import Preprocessor
 
 class Threshold(Preprocessor):
 
-    def __init__(self, upper=220, lower=30):
+    def __init__(self, upper=220, lower=30, normalize=True):
         self.upper = upper
         self.lower = lower
+        self.normalize = normalize
 
     def filter(self, img):
         """
@@ -20,6 +21,13 @@ class Threshold(Preprocessor):
         by thresholding the image
 
         """
+
+        if self.normalize:
+            img = img.astype(float)
+            img -= img.min()
+            img /= img.max()
+            img *= 255
+            img = img.astype(img.dtype)
 
         upper = self.upper
         lower = self.lower

@@ -4,6 +4,7 @@ body {
     overflow-y: scroll;
     min-width: 724px;
     min-height: 470px;
+    font-family: sans-serif;
 }
 
 /* #00b4cb #82235c #7dd0b6 #1c4d8a; */
